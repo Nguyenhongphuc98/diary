@@ -1,12 +1,12 @@
-## Electron app.
-### Basic setup with React, Typescript and Webpack.
+## Diary app.
+### Basic Electron with React, Typescript and Webpack.
 
 To run this project.
 
 - Clone this repo
 
 ```bash
-  git clone https://github.com/elisealcala/electron-react-ts.git
+  git clone https://github.com/Nguyenhongphuc98/diary
 ```
 
 - Install the dependencies
