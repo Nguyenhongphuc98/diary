@@ -38,5 +38,5 @@ app.on("ready", createWindow);
 app.allowRendererProcessReuse = true;
 app.on('will-quit', e => {
   console.log(e);
-  e.preventDefault();
+  // e.preventDefault();
 })
