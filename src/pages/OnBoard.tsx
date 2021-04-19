@@ -1,4 +1,6 @@
 import React, { ReactNode } from 'react';
+import logo from '../assets/images/app_ic.png';
+import '../assets/css/password.css';
 
 interface IProps {
     children: ReactNode;
@@ -9,7 +11,7 @@ function OnBoard(props: IProps): JSX.Element {
     return (
         <div>
             <div>
-                <img src= '../assets/images/app_ic.png' alt="icon"/>
+                <img id = 'logo' src= {logo} alt="icon"/>
                 <div>
                     { children }
                 </div>

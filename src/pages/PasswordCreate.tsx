@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FormEvent, useState } from 'react';
+import React, { ChangeEvent, FormEvent, useState, useEffect } from 'react';
 import MessageLog from '../components/MessageLog';
 import { MessageType } from '../Types';
 import OnBoard from './OnBoard';
@@ -33,18 +33,6 @@ function PasswordCreate(): JSX.Element {
             ...password,
             passOne: e.target.value
         });
-
-        if (password.passOne.length < 8 && password.passOne.length !== 0) {
-            setInfo({
-                state: "warning",
-                message: "Password to weak!"
-            })
-        } else {
-            setInfo({
-                state: "none",
-                message: ""
-            })
-        }
     }
 
     const onChangePTwo = (e: ChangeEvent<HTMLInputElement>): void => {
@@ -67,11 +55,23 @@ function PasswordCreate(): JSX.Element {
         }
     }
 
+    useEffect(() => {
+        if (password.passOne.length < 8 && password.passOne.length !== 0) {
+            setInfo({
+                state: "warning",
+                message: "Password too weak!"
+            })
+        } else {
+            setInfo({
+                state: "none",
+                message: ""
+            })
+        }
+    }, [password.passOne]);
+
     return (
         <div>
             <OnBoard>
-                {info.state !== "none" && <MessageLog type={info.state} message={info.message} />}
-
                 <form onSubmit={onSubmit}>
                     <p>Enter Password</p>
                     <input type="password"
@@ -87,6 +87,8 @@ function PasswordCreate(): JSX.Element {
                     />
                     <input type="submit" value="Create"/>
                 </form>
+
+                {info.state !== "none" && <MessageLog type={info.state} message={info.message} />}
             </OnBoard>
         </div>
     );

@@ -19,6 +19,17 @@ module.exports = {
 					loader: "babel-loader",
 				},
 			},
+			{
+				test: /\.(png|jpe?g|gif)$/i,
+				loader: 'file-loader',
+				options: {
+					name: '[path][name].[ext]',
+				},
+			},
+			{
+                test: /\.css$/,
+                use: [ 'style-loader', 'css-loader' ]
+            }
 		],
 	},
 	devServer: {
@@ -36,9 +47,9 @@ module.exports = {
 	plugins: [new HtmlWebpackPlugin()
 		// ,
 		// new CopyPlugin({
-        //     patterns: [
+		//     patterns: [
 		// 		{ from: 'src/assets', to: 'dist' },
-        //     ]
-        // })
+		//     ]
+		// })
 	],
 };
