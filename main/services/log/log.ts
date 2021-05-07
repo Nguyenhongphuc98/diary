@@ -12,7 +12,7 @@ export enum LogLevel {
 
 export const DEFAULT_LOG_LEVEL: LogLevel = LogLevel.Info;
 
-export interface ILogService extends LifeCycle {
+export interface ILogService {
    
 	getLevel(): LogLevel;
 	setLevel(level: LogLevel): void;

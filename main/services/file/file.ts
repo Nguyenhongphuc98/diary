@@ -1,7 +1,7 @@
 import { LifeCycle } from "../lifecycle";
 import { URI } from '../../common/uri';
 
-export interface IFileService extends LifeCycle {
+export interface IFileService {
 
     exists(resource: URI): Promise<boolean>;
 

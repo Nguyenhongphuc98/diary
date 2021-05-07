@@ -1,7 +1,7 @@
 import { LifeCycle } from "../lifecycle";
 
 
-export interface IConfiguration extends LifeCycle {
+export interface IConfiguration {
     
     getValue<T>(section: string): any;
 

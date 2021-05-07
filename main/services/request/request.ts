@@ -1,7 +1,7 @@
 import { LifeCycle } from "../lifecycle";
 
 
-export interface IRequestService extends LifeCycle {
+export interface IRequestService {
 
     request(options: IRequestOptions): Promise<IRequestContext>;
 }

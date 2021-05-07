@@ -1,14 +1,4 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
 
-// Names from https://blog.codinghorror.com/ascii-pronunciation-rules-for-programmers/
-
-/**
- * An inlined enum containing useful character codes (to be used with String.charCodeAt).
- * Please leave the const keyword such that it gets inlined when compiled to JavaScript!
- */
  export const enum CharCode {
 	Null = 0,
 	/**
