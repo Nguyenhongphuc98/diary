@@ -1,16 +1,18 @@
-import React from 'react';
+import React, {useReducer} from 'react';
 import ReactDom from 'react-dom';
-import OnBoard from './pages/OnBoard';
 import PasswordCreate from './pages/PasswordCreate';
 
 const mainElement = document.createElement('div');
 document.body.appendChild(mainElement);
 
 const App = () => {
+
+  // const [app, dispatch] = useReducer(appReducer, initState);
+
   return (
-    <h1>
-      <PasswordCreate/>
-    </h1>
+    <div>
+        <PasswordCreate />
+    </div>
   )
 }
 

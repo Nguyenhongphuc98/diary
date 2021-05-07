@@ -1,42 +1,74 @@
-import { app, BrowserWindow } from "electron";
-import * as path from "path";
-import * as url from "url";
 
-const t = require('./services/s');
+import "reflect-metadata";
+import { container, instanceCachingFactory } from "tsyringe";
+import { StateService } from "./services/state/stateService";
+import { ConfigurationService } from "./services/config/configurationService";
+import { EnviromentService } from "./services/enviroment/enviromentService";
+import { MainLifecycleService } from "./services/mainLifecycle/mainLifecycleService";
+import { FileLogService } from "./services/log/fileLogService";
+import { RequestService } from "./services/request/requestService";
+import { FileService } from "./services/file/fileService";
+import { Application } from "./app";
+import { LogLevel } from "./services/log/log";
+import { URI } from "./common/uri";
+import { DownloadService } from "./services/download/downloadService";
 
-let mainWindow: Electron.BrowserWindow | null;
+// Begin init and setup services ===================================================
+//==================================================================================
 
-function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    webPreferences: {
-      nodeIntegration: true,
-      webSecurity: false,
-    },
-  });
+container.register(
+	"IFileService", {
+	useClass: FileService
+});
 
-  if (process.env.NODE_ENV === "development") {
-    mainWindow.loadURL(`http://localhost:4000`);
-    mainWindow.webContents.openDevTools();
-  } else {
-    mainWindow.loadURL(
-      url.format({
-        pathname: path.join(__dirname, "index.html"),
-        protocol: "file:",
-        slashes: true,
-      })
-    );
-  }
+container.register(
+	"IStateService", {
+	useClass: StateService
+});
 
-  mainWindow.on("closed", () => {
-    mainWindow = null;
-  });
-}
+container.register(
+	"ILogService", {
+	useFactory: instanceCachingFactory<FileLogService>(c => {
 
-app.on("ready", createWindow);
-app.allowRendererProcessReuse = true;
-app.on('will-quit', e => {
-  console.log(e);
-  // e.preventDefault();
-})
+		const fileService = c.resolve(FileService);
+		const uri = new URI('uri')
+		return new FileLogService('internal log', uri, LogLevel.Info, fileService);
+	})
+});
+
+container.register(
+	"IConfiguration", {
+	useClass: ConfigurationService
+});
+
+container.register(
+	"IEnvironmentService", {
+	useClass: EnviromentService
+});
+
+container.register(
+	"IRequestService", {
+	useClass: RequestService
+});
+
+container.register(
+	"IDownload", {
+	useClass: DownloadService
+});
+
+const fileService = container.resolve(FileService);
+const state = container.resolve(StateService);
+const configuration = container.resolve(ConfigurationService);
+const enviroment = container.resolve(EnviromentService);
+const mainLifecycle = container.resolve(MainLifecycleService);
+
+const uri = new URI('uri')
+const fileLogService = new FileLogService('global log', uri, LogLevel.Info, fileService);
+fileLogService.trace("it work!")
+
+
+// End init and setup services ===================================================
+
+// pass container ? -> we can change container without change core files?
+const appCode = new Application(configuration, enviroment, mainLifecycle, state, fileLogService);
+appCode.startup();
