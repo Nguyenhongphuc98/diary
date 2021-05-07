@@ -8,7 +8,7 @@ import { MainLifecycleService } from "./services/mainLifecycle/mainLifecycleServ
 import { FileLogService } from "./services/log/fileLogService";
 import { RequestService } from "./services/request/requestService";
 import { FileService } from "./services/file/fileService";
-import { Application } from "./app";
+import { MainApplication } from "./appMain";
 import { LogLevel } from "./services/log/log";
 import { URI } from "./common/uri";
 import { DownloadService } from "./services/download/downloadService";
@@ -56,19 +56,12 @@ container.register(
 	useClass: DownloadService
 });
 
-const fileService = container.resolve(FileService);
-const state = container.resolve(StateService);
-const configuration = container.resolve(ConfigurationService);
-const enviroment = container.resolve(EnviromentService);
-const mainLifecycle = container.resolve(MainLifecycleService);
-
-const uri = new URI('uri')
-const fileLogService = new FileLogService('global log', uri, LogLevel.Info, fileService);
-fileLogService.trace("it work!")
-
+container.register(
+	"ILifecycleMainService", {
+	useClass: MainLifecycleService
+});
 
 // End init and setup services ===================================================
 
-// pass container ? -> we can change container without change core files?
-const appCode = new Application(configuration, enviroment, mainLifecycle, state, fileLogService);
+const appCode = container.resolve(MainApplication);
 appCode.startup();
