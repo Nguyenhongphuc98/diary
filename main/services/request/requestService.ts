@@ -1,11 +1,12 @@
 import { IConfiguration } from '../config/configuration';
-import { LifeCycle } from '../lifecycle';
+import { ILifeCycle } from '../base/lifecycle';
 import { ILogService } from '../log/log';
 import { IRequestService, IRequestContext, IRequestOptions, IHTTPConfiguration } from './request';
 import { injectable, inject } from "tsyringe";
+import { BaseService } from '../base/service';
 
 @injectable()
-export class RequestService extends LifeCycle implements IRequestService {
+export class RequestService extends BaseService implements IRequestService {
 
 	private proxyUrl?: string;
 	private strictSSL: boolean | undefined;
@@ -17,12 +18,10 @@ export class RequestService extends LifeCycle implements IRequestService {
 	) {
 		super();
 		this.configure(configurationService.getValue<IHTTPConfiguration>('section name'));
-		this.onInit();
 	}
 
-	onInit() {
-		console.log('RequestService did init');
-		super.onInit();
+	setup() {
+		this.logService.info("RequestService#Setup");
 	}
 
 	private configure(config: IHTTPConfiguration) {

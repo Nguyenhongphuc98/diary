@@ -1,19 +1,22 @@
-import { IConfiguration } from "./services/config/configuration";
-import { IEnvironmentService } from "./services/enviroment/enviroment";
-import { LifeCycle } from "./services/lifecycle";
-import { ILogService } from "./services/log/log";
-import { ILifecycleMainService } from "./services/mainLifecycle/mainLifecycle";
-import { IStateService } from "./services/state/state";
-import { IApp } from "./app";
+import { IConfiguration } from "../services/config/configuration";
+import { IEnvironmentService } from "../services/enviroment/enviroment";
+import { ILifeCycle } from "../services/base/lifecycle";
+import { ILogService } from "../services/log/log";
+import { ILifecycleMainService } from "../services/mainLifecycle/mainLifecycle";
+import { IStateService } from "../services/state/state";
+import { IApp } from "../services/base/app";
 import { app, BrowserWindow } from "electron";
 import * as path from "path";
 import * as url from "url";
 import { injectable, inject } from "tsyringe";
+import { Emitter, Event } from "../common/event";
+import { Disposable } from "../common/disposable";
+import { BaseService } from "../services/base/service";
 
 let mainWindow: BrowserWindow | null;
 
 @injectable()
-export class MainApplication extends LifeCycle implements IApp {
+export class MainApplication extends BaseService implements IApp, ILifeCycle {
 
     private initPromise: Promise<void> | undefined;
 
@@ -27,15 +30,23 @@ export class MainApplication extends LifeCycle implements IApp {
         super();
         this.registerListeners();
     }
-
+ 
     registerListeners() {
         app.allowRendererProcessReuse = false;
-        process.on('uncaughtException', err => this.lifecycleService.onError(err));
-        process.on('unhandledRejection', (reason: unknown) => this.lifecycleService.onError(reason));
+        process.on('uncaughtException', err => this.logService.error(err));
+        process.on('unhandledRejection', (reason: unknown) =>this.logService.error("appMain#unhandledRejection"));
+
+        this.lifecycleService.onBeforeShutdown(() => {
+            this.logService.info("Shutdown#Call-from-app-main");
+        })
+
+        this.lifecycleService.onWillShutdown(() => {
+            this.dispose();
+        })
 
         app.on('ready', e => this.initWindow());
-        app.on('activate', (e, hasVisiblewindiws) => this.onResume());
-        app.on('will-quit', e => this.onDeInit());
+        app.on('activate', (e, hasVisiblewindiws) => this.resume());
+        app.on('will-quit', e => this.deInit());
 
         app.on('remote-require', (event, sender, module) => {
 			this.logService.trace('app#on(remote-require): prevented');
@@ -67,16 +78,19 @@ export class MainApplication extends LifeCycle implements IApp {
         this.logService.debug(`from: ${this.enviromentService.appRoot}`);
     }
 
-    onPause() {
+    pause() {
         this.logService.trace('app#pause');
+        this._onPause.fire();
     }
 
-    onResume() {
+    resume() {
         this.logService.trace('app#active');
+        this._onResume.fire();
     }
 
-    onDeInit() {
+    deInit() {
         this.logService.trace('app#deinit');
+        this._onDeInit.fire();
     }
 
     initWindow() {
@@ -105,7 +119,7 @@ export class MainApplication extends LifeCycle implements IApp {
         }
 
         mainWindow.on("closed", () => {
-            this.onPause();
+            this.pause();
             mainWindow = null;
         });
     }

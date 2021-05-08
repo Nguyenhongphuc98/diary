@@ -4,7 +4,9 @@ import { isUndefined, isUndefinedOrNull } from "../../common/utils";
 import { IStateService } from "./state";
 import { ILogService } from "../log/log";
 import { injectable, inject } from "tsyringe";
-import { LifeCycle } from "../lifecycle";
+import { ILifeCycle } from "../base/lifecycle";
+import { Disposable } from "../../common/disposable";
+import { BaseService } from "../base/service";
 
 type StorageDatabase = { [key: string]: any; };
 
@@ -123,28 +125,23 @@ export class FileStorage {
 }
 
 @injectable()
-export class StateService extends LifeCycle implements IStateService {
+export class StateService extends BaseService implements IStateService {
 
 	// private static readonly STATE_FILE = 'storage.json';
 
 	private fileStorage: FileStorage;
 
 	constructor(
-		@inject("IEnvironmentService") environmentService: IEnvironmentService,
-		@inject("ILogService") logService: ILogService
+		@inject("IEnvironmentService") private readonly environmentService: IEnvironmentService,
+		@inject("ILogService") private readonly logService: ILogService
 	) {
 		super();
 		this.fileStorage = new FileStorage(environmentService.userDataPath /* combine with StateService.STATE_FILE*/, error => logService.error(error));
-		this.setup();
 	}
 
 	setup(): Promise<void> {
+		this.logService.info("StateService#Setup")
 		return this.fileStorage.init();
-	}
-
-	onInit() {
-		console.log('StateService did init');
-		super.onInit();
 	}
 
 	getItem<T>(key: string, defaultValue: T): T;

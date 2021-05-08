@@ -1,19 +1,18 @@
-import { LifeCycle } from "../lifecycle";
+import { ILifeCycle } from "../base/lifecycle";
+import { BaseService } from "../base/service";
 import { IConfiguration } from "./configuration";
 
 
 // ex enable crash reporter
 // language, http.proxyAuthorization, enable background update, 
-export class ConfigurationService extends LifeCycle implements IConfiguration {
+export class ConfigurationService extends BaseService implements IConfiguration {
 
     constructor() {
         super();
-        this.onInit();
     }
 
-    onInit() {
-		console.log('ConfigurationService did init');	
-		super.onInit();
+    setup() {
+		console.log('ConfigurationService#Setup');	
 	}
 
     getValue(section: string): any {

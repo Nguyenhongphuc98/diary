@@ -1,19 +1,18 @@
 import { singleton } from "tsyringe";
 import { URI } from "../../common/uri";
-import { LifeCycle } from "../lifecycle";
+import { ILifeCycle } from "../base/lifecycle";
+import { BaseService } from "../base/service";
 import { IEnvironmentService } from "./enviroment";
 
 @singleton()
-export class EnviromentService extends LifeCycle implements IEnvironmentService {
+export class EnviromentService extends BaseService implements IEnvironmentService {
 
     constructor(){
         super();
-        this.onInit();
     }
     
-    onInit() {
-        console.log('EnviromentService did init');
-        super.onInit();
+    setup() {
+        console.log('EnviromentService#Setup');
     }
 
     userRoamingDataHome: URI = new URI("appData");

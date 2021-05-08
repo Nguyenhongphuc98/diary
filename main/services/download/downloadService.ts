@@ -1,24 +1,23 @@
 import { URI } from "../../common/uri";
 import { IFileService } from "../file/file";
-import { LifeCycle } from "../lifecycle";
+import { ILifeCycle } from "../base/lifecycle";
 import { IRequestService } from "../request/request";
 import { IDownload } from "./download";
 import {inject, injectable} from "tsyringe";
+import { BaseService } from "../base/service";
 
 @injectable()
-export class DownloadService extends LifeCycle implements IDownload {
+export class DownloadService extends BaseService implements IDownload {
 
 	constructor(
 		@inject("IRequestService") private readonly requestService: IRequestService,
 		@inject("IFileService") private readonly fileService: IFileService
 	) { 
         super();
-		this.onInit();
     }
 
-	onInit() {
-		console.log('DownloadService did init');	
-		super.onInit();
+	setup() {
+		console.log('DownloadService#Setup');
 	}
 
 	async download(resource: URI, target: URI): Promise<void> {

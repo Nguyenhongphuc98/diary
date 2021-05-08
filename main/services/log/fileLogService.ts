@@ -1,8 +1,9 @@
 import { URI } from "../../common/uri";
 import { IFileService } from "../file/file";
-import { LifeCycle } from "../lifecycle";
+import { ILifeCycle } from "../base/lifecycle";
 import { ILogService, LogLevel, AbstractLog } from "./log";
 import { injectable, inject } from "tsyringe";
+import { TouchBarScrubber } from "electron";
 
 @injectable()
 export class FileLogService extends AbstractLog implements ILogService {
@@ -19,27 +20,22 @@ export class FileLogService extends AbstractLog implements ILogService {
 		super();
 		this.setLevel(level);
 		this.initializePromise = immediately ? this.setup() : undefined;
-		this.onInit();
 	}
 
 	// If not init at constructor, should be called before use any other method
 	async setup(): Promise<void> {
+
+		this.onReady(() => {
+			this.info("FileLogService#Ready");
+		})
+
 		try {
+			console.log("FileLogService#Setup");
 			await this.fileService.createFile(this.resource);
-			this.onReady();
+			this._onReady.fire();
 		} catch (error) {
 			throw error;
 		}
-	}
-
-	onInit() {
-		console.log('FileLogService did init with name: ' + this.name);
-		super.onInit();
-	}
-
-	onReady() {
-		this.info("FileLogService#onReady");
-		super.onReady();
 	}
 
 	trace(message: string, ...args: any[]): void {

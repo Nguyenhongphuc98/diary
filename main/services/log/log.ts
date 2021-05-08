@@ -1,4 +1,5 @@
-import { LifeCycle } from "../lifecycle";
+import { ILifeCycle } from "../base/lifecycle";
+import { BaseService } from "../base/service";
 
 export enum LogLevel {
 	Trace,
@@ -25,7 +26,7 @@ export interface ILogService {
 	critical(message: string | Error, ...args: any[]): void;
 }
 
-export abstract class AbstractLog extends LifeCycle {
+export abstract class AbstractLog extends BaseService {
 
 	private level: LogLevel = DEFAULT_LOG_LEVEL;
 

@@ -1,18 +1,18 @@
 import { URI } from "../../common/uri";
 import { IBuffer, ICreateFileOptions, IFileService, IReadFileOptions, IBaseStat } from "./file";
-import { LifeCycle } from "../lifecycle";
+import { ILifeCycle } from "../base/lifecycle";
 import { LifeCycleState, NoInputHandle } from "../types";
+import { BaseService } from "../base/service";
 
 
-export class FileService extends LifeCycle implements IFileService {
+export class FileService extends BaseService implements IFileService {
 
     constructor() {
         super();
-        this.onInit();
     }
 
-    onInit() {
-        console.log('FileService did init');
+    setup() {
+        console.log('FileService#Setup');
     }
 
     async exists(resource: URI): Promise<boolean> {

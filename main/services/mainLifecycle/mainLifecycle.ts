@@ -1,6 +1,9 @@
+
+import { Event } from "../../common/event";
+import { IService } from "../base/service";
 import { ErrorHanlder, NoInputHandle } from "../types";
 
-export interface ILifecycleMainService {
+export interface ILifecycleMainService extends IService {
 
 	readonly wasRestarted: boolean;
 
@@ -9,17 +12,17 @@ export interface ILifecycleMainService {
 	 */
 	readonly quitRequested: boolean;
 
-	readonly onBeforeShutdown: NoInputHandle;
+	readonly onBeforeShutdown: Event<void>;
 
-	readonly onWillShutdown: NoInputHandle;
+	readonly onWillShutdown: Event<void>;
 
-	readonly onWillLoadWindow: NoInputHandle;
+	readonly onWillLoadWindow: Event<void>;
 
-	readonly onBeforeUnloadWindow: NoInputHandle;
+	readonly onBeforeUnloadWindow: Event<void>;
 
-	readonly onBeforeCloseWindow: NoInputHandle;
+	readonly onBeforeCloseWindow: Event<void>;
 
-	readonly onError: (ErrorHanlder);
+	readonly onError: Event<Error>;
 
 	reload(): Promise<void>;
 

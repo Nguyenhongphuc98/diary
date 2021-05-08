@@ -8,7 +8,7 @@ import { MainLifecycleService } from "./services/mainLifecycle/mainLifecycleServ
 import { FileLogService } from "./services/log/fileLogService";
 import { RequestService } from "./services/request/requestService";
 import { FileService } from "./services/file/fileService";
-import { MainApplication } from "./appMain";
+import { MainApplication } from "./main-process/appMain";
 import { LogLevel } from "./services/log/log";
 import { URI } from "./common/uri";
 import { DownloadService } from "./services/download/downloadService";
