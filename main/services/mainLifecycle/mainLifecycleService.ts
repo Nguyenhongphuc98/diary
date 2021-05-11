@@ -47,6 +47,14 @@ export class MainLifecycleService extends BaseService implements ILifecycleMainS
         this._onReady.fire();
     }
 
+    didInit() {
+        this.logService.info("MainLifecycleService#Init");
+    }
+
+    didReady() {
+        this.logService.info("MainLifecycleService#Ready");
+    }
+
     registerListener() {
         const beforeQuite = () => {
             this.logService.trace('Lifecycle#onBeforeShutdown.fire()');
@@ -58,12 +66,8 @@ export class MainLifecycleService extends BaseService implements ILifecycleMainS
         app.once('will-quit', e => {
             this.logService.trace('Lifecycle#app.on(will-quit)');
 
-            // Prevent the quit until the shutdown promise was resolved
-            //e.preventDefault();
-
             app.removeListener('before-quit', beforeQuite);
             this.dispose();
-            app.quit();
         });
     }
 

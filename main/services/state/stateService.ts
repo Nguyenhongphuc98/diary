@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import { isUndefined, isUndefinedOrNull } from "../../common/utils";
 import { IStateService } from "./state";
 import { ILogService } from "../log/log";
-import { injectable, inject } from "tsyringe";
+import { injectable, inject, singleton } from "tsyringe";
 import { ILifeCycle } from "../base/lifecycle";
 import { Disposable } from "../../common/disposable";
 import { BaseService } from "../base/service";
@@ -124,7 +124,7 @@ export class FileStorage {
 	}
 }
 
-@injectable()
+@singleton()
 export class StateService extends BaseService implements IStateService {
 
 	// private static readonly STATE_FILE = 'storage.json';
@@ -138,6 +138,14 @@ export class StateService extends BaseService implements IStateService {
 		super();
 		this.fileStorage = new FileStorage(environmentService.userDataPath /* combine with StateService.STATE_FILE*/, error => logService.error(error));
 	}
+
+	didInit() {
+        this.logService.info("StateService#Init");
+    }
+	
+    didReady() {
+        this.logService.info("StateService#Ready");
+    }
 
 	setup(): Promise<void> {
 		this.logService.info("StateService#Setup")

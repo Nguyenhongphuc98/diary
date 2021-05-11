@@ -11,10 +11,10 @@ import { FileService } from "./services/file/fileService";
 import { MainApplication } from "./main-process/appMain";
 import { LogLevel } from "./services/log/log";
 import { URI } from "./common/uri";
-import { DownloadService } from "./services/download/downloadService";
+import { IDownload } from "./services/download/download";
 
 // Begin init and setup services ===================================================
-//==================================================================================
+// ==================================================================================
 
 container.register(
 	"IFileService", {
@@ -52,15 +52,22 @@ container.register(
 });
 
 container.register(
-	"IDownload", {
-	useClass: DownloadService
-});
-
-container.register(
 	"ILifecycleMainService", {
 	useClass: MainLifecycleService
 });
 
+
+container.register(
+	"IDownload", {
+	useFactory: instanceCachingFactory<Promise<IDownload>>(async c => {
+
+		const DownloadService = (await import("./services/download/downloadService")).DownloadService;
+		const requestService = c.resolve(RequestService);
+		const fileService = c.resolve(FileService);
+
+		return new DownloadService(requestService, fileService);
+	})
+});
 // End init and setup services ===================================================
 
 const appCode = container.resolve(MainApplication);

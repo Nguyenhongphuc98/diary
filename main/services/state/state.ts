@@ -1,6 +1,6 @@
 import { IService } from "../base/service";
 
-export interface IStateService extends IService {
+export interface IStateService {
 	
 	getItem<T>(key: string, defaultValue: T): T;
 	getItem<T>(key: string, defaultValue?: T): T | undefined;

@@ -11,12 +11,20 @@ export class ConfigurationService extends BaseService implements IConfiguration 
         super();
     }
 
+    didInit() {
+        console.log("ConfigurationService#Init");	
+    }
+	
+    didReady() {
+        console.log("ConfigurationService#Ready");	
+    }
+
     setup() {
 		console.log('ConfigurationService#Setup');	
 	}
 
     getValue(section: string): any {
-        console.log("get value");
+        console.log("ConfigurationService#GetValue");
         return section;
     }
 

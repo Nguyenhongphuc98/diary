@@ -20,6 +20,14 @@ export class RequestService extends BaseService implements IRequestService {
 		this.configure(configurationService.getValue<IHTTPConfiguration>('section name'));
 	}
 
+	didInit() {
+        this.logService.info("RequestService#Init");
+    }
+	
+    didReady() {
+        this.logService.info("RequestService#Ready");
+    }
+
 	setup() {
 		this.logService.info("RequestService#Setup");
 	}

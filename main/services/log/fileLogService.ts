@@ -22,6 +22,14 @@ export class FileLogService extends AbstractLog implements ILogService {
 		this.initializePromise = immediately ? this.setup() : undefined;
 	}
 
+	didInit() {
+        console.log("FileLogService#Init");	
+    }
+	
+    didReady() {
+        console.log("FileLogService#Ready");	
+    }
+
 	// If not init at constructor, should be called before use any other method
 	async setup(): Promise<void> {
 

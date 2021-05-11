@@ -11,6 +11,14 @@ export class EnviromentService extends BaseService implements IEnvironmentServic
         super();
     }
     
+    didInit() {
+        console.log("EnviromentService#Init");	
+    }
+	
+    didReady() {
+        console.log("EnviromentService#Ready");	
+    }
+
     setup() {
         console.log('EnviromentService#Setup');
     }

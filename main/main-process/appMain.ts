@@ -8,10 +8,12 @@ import { IApp } from "../services/base/app";
 import { app, BrowserWindow } from "electron";
 import * as path from "path";
 import * as url from "url";
-import { injectable, inject } from "tsyringe";
+import { injectable, inject, container } from "tsyringe";
 import { Emitter, Event } from "../common/event";
 import { Disposable } from "../common/disposable";
 import { BaseService } from "../services/base/service";
+import { DownloadWraper, IDownload } from "../services/download/download";
+import { URI } from "../common/uri";
 
 let mainWindow: BrowserWindow | null;
 
@@ -29,6 +31,12 @@ export class MainApplication extends BaseService implements IApp, ILifeCycle {
     ) {
         super();
         this.registerListeners();
+        
+        // test download service
+        const downloadWrapper = container.resolve(DownloadWraper);
+        downloadWrapper.setup().then(d => {
+            d.download(new URI(""), new URI(""));
+        });
     }
  
     registerListeners() {
@@ -58,10 +66,7 @@ export class MainApplication extends BaseService implements IApp, ILifeCycle {
 		});
 		app.on('remote-get-builtin', (event, sender, module) => {
 			this.logService.trace(`app#on(remote-get-builtin): prevented on ${module}`);
-
-			if (module !== 'clipboard') {
-				event.preventDefault();
-			}
+			event.preventDefault();
 		});
 		app.on('remote-get-current-window', event => {
 			this.logService.trace(`app#on(remote-get-current-window): prevented`);
@@ -71,6 +76,18 @@ export class MainApplication extends BaseService implements IApp, ILifeCycle {
 			this.logService.trace(`app#on(remote-get-current-web-contents): prevented`);
 			event.preventDefault();
 		});
+    }
+
+    setup() {
+        this.logService.info(`AppMain#Setup`);
+    }
+
+    didInit() {
+        this.logService.info(`AppMain#Init`);
+    }
+
+    didReady() {
+        this.logService.info(`AppMain#Ready`);
     }
 
     startup() {

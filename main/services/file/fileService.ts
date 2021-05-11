@@ -9,6 +9,15 @@ export class FileService extends BaseService implements IFileService {
 
     constructor() {
         super();
+        console.log("FileService#Constructor");
+    }
+
+    didInit() {
+        console.log("FileService#Init");	
+    }
+	
+    didReady() {
+        console.log("FileService#Ready");	
     }
 
     setup() {

@@ -14,6 +14,19 @@ export class DownloadService extends BaseService implements IDownload {
 		@inject("IFileService") private readonly fileService: IFileService
 	) { 
         super();
+		console.log("DownloadService#Constructor");	
+		let t =0;
+		// while (t<9999) {
+		// 	t++;
+		// }
+    }
+
+	didInit() {
+        console.log("DownloadService#Init");	
+    }
+	
+    didReady() {
+        console.log("DownloadService#Ready");	
     }
 
 	setup() {
@@ -21,6 +34,8 @@ export class DownloadService extends BaseService implements IDownload {
 	}
 
 	async download(resource: URI, target: URI): Promise<void> {
+		console.log("Download method did call");
+		
 		// support copy file if src is local
         // modify options if needed and make request to resource
         // base on result, use file service to handle
