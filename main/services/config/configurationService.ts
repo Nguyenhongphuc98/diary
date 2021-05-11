@@ -1,7 +1,5 @@
-import { ILifeCycle } from "../base/lifecycle";
 import { BaseService } from "../base/service";
 import { IConfiguration } from "./configuration";
-
 
 // ex enable crash reporter
 // language, http.proxyAuthorization, enable background update, 

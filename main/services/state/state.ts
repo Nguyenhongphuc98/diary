@@ -1,4 +1,3 @@
-import { IService } from "../base/service";
 
 export interface IStateService {
 	

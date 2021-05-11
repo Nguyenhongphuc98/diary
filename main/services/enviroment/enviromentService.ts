@@ -1,6 +1,5 @@
 import { singleton } from "tsyringe";
 import { URI } from "../../common/uri";
-import { ILifeCycle } from "../base/lifecycle";
 import { BaseService } from "../base/service";
 import { IEnvironmentService } from "./enviroment";
 

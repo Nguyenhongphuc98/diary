@@ -1,4 +1,3 @@
-import { ILifeCycle } from "../base/lifecycle";
 import { URI } from '../../common/uri';
 
 export interface IFileService {

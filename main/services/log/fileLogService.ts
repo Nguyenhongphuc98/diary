@@ -1,9 +1,7 @@
 import { URI } from "../../common/uri";
 import { IFileService } from "../file/file";
-import { ILifeCycle } from "../base/lifecycle";
 import { ILogService, LogLevel, AbstractLog } from "./log";
 import { injectable, inject } from "tsyringe";
-import { TouchBarScrubber } from "electron";
 
 @injectable()
 export class FileLogService extends AbstractLog implements ILogService {

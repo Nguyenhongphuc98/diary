@@ -56,7 +56,6 @@ container.register(
 	useClass: MainLifecycleService
 });
 
-
 container.register(
 	"IDownload", {
 	useFactory: instanceCachingFactory<Promise<IDownload>>(async c => {

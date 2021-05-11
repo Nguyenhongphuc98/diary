@@ -1,6 +1,5 @@
 import { inject, injectable } from "tsyringe";
 import { URI } from "../../common/uri";
-import { ILifeCycle } from "../base/lifecycle";
 
 export interface IDownload {
 
@@ -8,7 +7,7 @@ export interface IDownload {
 }
 
 @injectable()
-export class DownloadWraper {
+export class DownloadWrapper {
 
 	constructor(
 		@inject("IDownload") private readonly downloadService: Promise<IDownload>

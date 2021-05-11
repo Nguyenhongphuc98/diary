@@ -1,6 +1,5 @@
 import { Disposable } from "../../common/disposable";
 import { Emitter } from "../../common/event";
-import { NoInputHandle } from "../types";
 import { ILifeCycle } from "./lifecycle";
 
 export interface IService {

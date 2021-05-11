@@ -1,6 +1,5 @@
 import { URI } from "../../common/uri";
 import { IFileService } from "../file/file";
-import { ILifeCycle } from "../base/lifecycle";
 import { IRequestService } from "../request/request";
 import { IDownload } from "./download";
 import {inject, injectable} from "tsyringe";
@@ -15,10 +14,6 @@ export class DownloadService extends BaseService implements IDownload {
 	) { 
         super();
 		console.log("DownloadService#Constructor");	
-		let t =0;
-		// while (t<9999) {
-		// 	t++;
-		// }
     }
 
 	didInit() {

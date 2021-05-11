@@ -1,5 +1,4 @@
 import { IConfiguration } from '../config/configuration';
-import { ILifeCycle } from '../base/lifecycle';
 import { ILogService } from '../log/log';
 import { IRequestService, IRequestContext, IRequestOptions, IHTTPConfiguration } from './request';
 import { injectable, inject } from "tsyringe";

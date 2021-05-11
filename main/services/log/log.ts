@@ -1,4 +1,3 @@
-import { ILifeCycle } from "../base/lifecycle";
 import { BaseService } from "../base/service";
 
 export enum LogLevel {

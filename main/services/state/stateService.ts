@@ -4,8 +4,6 @@ import { isUndefined, isUndefinedOrNull } from "../../common/utils";
 import { IStateService } from "./state";
 import { ILogService } from "../log/log";
 import { injectable, inject, singleton } from "tsyringe";
-import { ILifeCycle } from "../base/lifecycle";
-import { Disposable } from "../../common/disposable";
 import { BaseService } from "../base/service";
 
 type StorageDatabase = { [key: string]: any; };

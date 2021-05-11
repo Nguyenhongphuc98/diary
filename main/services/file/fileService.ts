@@ -1,7 +1,5 @@
 import { URI } from "../../common/uri";
 import { IBuffer, ICreateFileOptions, IFileService, IReadFileOptions, IBaseStat } from "./file";
-import { ILifeCycle } from "../base/lifecycle";
-import { LifeCycleState, NoInputHandle } from "../types";
 import { BaseService } from "../base/service";
 
 

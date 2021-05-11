@@ -1,5 +1,3 @@
-import { ILifeCycle } from "../base/lifecycle";
-
 
 export interface IConfiguration {
     
