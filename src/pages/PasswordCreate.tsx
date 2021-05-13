@@ -1,4 +1,6 @@
+import { ipcRenderer } from 'electron';
 import React, { ChangeEvent, FormEvent, useState, useEffect, useContext } from 'react';
+import { requestOpenDownload } from '../../main/browser/ipc';
 import MessageLog from '../components/MessageLog';
 import { MessageType } from '../Types';
 import OnBoard from './OnBoard';
@@ -89,9 +91,12 @@ function PasswordCreate(): JSX.Element {
                 </form>
 
                 {info.state !== "none" && <MessageLog type={info.state} message={info.message} />}
+
+                <button onClick = {requestOpenDownload}>Open Download</button>
             </OnBoard>
         </div>
     );
 }
+
 
 export default PasswordCreate

@@ -10,3 +10,11 @@ export interface Error {
     message: string;
     stack?: string;
 }
+
+export interface InitWindowOptions {
+    contentName: string;
+    nodeIntegration?: boolean,
+    webSecurity?: boolean,
+    width?: number;
+    height?: number;
+}
