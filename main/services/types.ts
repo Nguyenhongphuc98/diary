@@ -18,3 +18,5 @@ export interface InitWindowOptions {
     width?: number;
     height?: number;
 }
+
+export type Ctor<T> = new (...args: any[]) => T;

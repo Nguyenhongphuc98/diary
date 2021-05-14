@@ -12,33 +12,30 @@ export class FileLogService extends AbstractLog implements ILogService {
 		private readonly name: string,
 		private readonly resource: URI,
 		level: LogLevel,
-		@inject("IFileService") private readonly fileService: IFileService,
-		private readonly immediately: boolean = true
+		@inject("IFileService") private readonly fileService: IFileService
 	) {
 		super();
 		this.setLevel(level);
-		this.initializePromise = immediately ? this.setup() : undefined;
+		console.log("FileLogService#Constructor");
 	}
 
-	didInit() {
+	serviceDidInit() {
         console.log("FileLogService#Init");	
     }
 	
-    didReady() {
+    serviceDidReady() {
         console.log("FileLogService#Ready");	
     }
+	
+	serviceWillDeInit() {
+		console.log("FileLogService#Deinit");	
+	}
 
 	// If not init at constructor, should be called before use any other method
-	async setup(): Promise<void> {
-
-		this.onReady(() => {
-			this.info("FileLogService#Ready");
-		})
-
+	async asyncSetup(): Promise<void> {
 		try {
 			console.log("FileLogService#Setup");
 			await this.fileService.createFile(this.resource);
-			this._onReady.fire();
 		} catch (error) {
 			throw error;
 		}
@@ -69,11 +66,11 @@ export class FileLogService extends AbstractLog implements ILogService {
 	}
 
 	private async _log(level: LogLevel, message: string): Promise<void> {
-		if (!this.initializePromise) {
-			throw new Error("Use before setup");
-		}
-		// Add to queue ?
-		await this.initializePromise;
+		// if (!this.initializePromise) {
+		// 	throw new Error("Use before setup");
+		// }
+		// // Add to queue ?
+		// await this.initializePromise;
 		// Load file, check file-size
 		// If not exceed max size -> write
 		// timestamp - name - level - message

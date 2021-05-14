@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------------------------
- *  Clone from Microsoft.
+ *  Clone from Microsoft (modify some point).
  *--------------------------------------------------------------------------------------------*/
 
 class Node<E> {
@@ -94,6 +94,27 @@ export class LinkedList<E> {
 			this._remove(this._last);
 			return res;
 		}
+	}
+
+	remove(element: E): E | undefined {
+		const item = this.getNode(element);
+		if (item) {
+			const res = item.element;
+			this._remove(item);
+			return res;
+		}
+		return undefined;
+	}
+
+	getNode(element: E): Node<E> | undefined {
+		if (this._last === Node.Undefined) {
+			return undefined;
+		}
+		let temp = this._first;
+		while (temp.element !== element && temp != undefined) {
+			temp = temp.next;
+		}
+		return temp;
 	}
 
 	private _remove(node: Node<E>): void {

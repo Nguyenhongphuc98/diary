@@ -10,9 +10,9 @@ export interface ILifeCycle {
     onDeInit: Event<void>;
 
     // use to observer when event fired
-    didInit?(e: void): any;
-    didReady?(e: void): any;
-    didPause?(e: void): any;
-    didResume?(e: void): any;
-    diddeInit?(e: void): any;
+    serviceDidInit?(e: void): any;
+    serviceDidReady?(e: void): any;
+    serviceWillPause?(e: void): any;
+    serviceWillResume?(e: void): any;
+    serviceWillDeInit?(e: void): any;
 }

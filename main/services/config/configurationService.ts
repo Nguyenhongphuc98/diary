@@ -7,14 +7,19 @@ export class ConfigurationService extends BaseService implements IConfiguration 
 
     constructor() {
         super();
+        console.log("In ConfigurationService constructor");
     }
 
-    didInit() {
+    serviceDidInit() {
         console.log("ConfigurationService#Init");	
     }
 	
-    didReady() {
+    serviceDidReady() {
         console.log("ConfigurationService#Ready");	
+    }
+
+    serviceWillDeInit() {
+        console.log("ConfigurationService#Deinit");	
     }
 
     setup() {

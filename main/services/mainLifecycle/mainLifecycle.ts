@@ -1,6 +1,7 @@
 import { Event } from "../../common/event";
 
 export interface ILifecycleMainService {
+	out():void;
 
 	readonly wasRestarted: boolean;
 

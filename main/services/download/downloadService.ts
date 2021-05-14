@@ -16,12 +16,16 @@ export class DownloadService extends BaseService implements IDownload {
 		console.log("DownloadService#Constructor");	
     }
 
-	didInit() {
+	serviceDidInit() {
         console.log("DownloadService#Init");	
     }
 	
-    didReady() {
+    serviceDidReady() {
         console.log("DownloadService#Ready");	
+    }
+
+	serviceWillDeInit() {
+        console.log("DownloadService#Deinit");	
     }
 
 	setup() {

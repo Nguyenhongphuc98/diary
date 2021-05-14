@@ -8,15 +8,20 @@ export class EnviromentService extends BaseService implements IEnvironmentServic
 
     constructor(){
         super();
+        console.log("EnviromentService#Constructor");
     }
     
-    didInit() {
+    serviceDidInit() {
         console.log("EnviromentService#Init");	
     }
 	
-    didReady() {
+    serviceDidReady() {
         console.log("EnviromentService#Ready");	
     }
+
+    serviceWillDeInit() {
+		console.log("EnviromentService#Deinit");	
+	}
 
     setup() {
         console.log('EnviromentService#Setup');

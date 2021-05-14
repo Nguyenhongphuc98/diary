@@ -9,26 +9,32 @@ import { app } from "electron";
 @injectable()
 export class MainLifecycleService extends BaseService implements ILifecycleMainService {
 
+    // Use to test same instance
+    luckynumber: number = Math.random();
+    out() {
+        console.log("lucky: " + this.luckynumber);
+    }
+
     wasRestarted: boolean = false;
     quitRequested: boolean = false;
 
     // Main lifecycle
-    private readonly _onBeforeShutdown = this._register(new Emitter<void>());
+    readonly _onBeforeShutdown = this._register(new Emitter<void>());
     readonly onBeforeShutdown = this._onBeforeShutdown.event;
 
-    private readonly _onWillShutdown = this._register(new Emitter<void>());
+    readonly _onWillShutdown = this._register(new Emitter<void>());
     readonly onWillShutdown = this._onWillShutdown.event;
 
-    private readonly _onWillLoadWindow = this._register(new Emitter<void>());
+    readonly _onWillLoadWindow = this._register(new Emitter<void>());
     readonly onWillLoadWindow = this._onWillLoadWindow.event;
 
-    private readonly _onBeforeUnloadWindow = this._register(new Emitter<void>());
+    readonly _onBeforeUnloadWindow = this._register(new Emitter<void>());
     readonly onBeforeUnloadWindow = this._onBeforeUnloadWindow.event;
 
-    private readonly _onBeforeCloseWindow = this._register(new Emitter<void>());
+    readonly _onBeforeCloseWindow = this._register(new Emitter<void>());
     readonly onBeforeCloseWindow = this._onBeforeCloseWindow.event;
 
-    private readonly _onError = this._register(new Emitter<Error>());
+    readonly _onError = this._register(new Emitter<Error>());
     readonly onError = this._onError.event;
 
     constructor(
@@ -37,20 +43,24 @@ export class MainLifecycleService extends BaseService implements ILifecycleMainS
     ) {
         super();
         this.registerListener();
+        console.log("MainLifecycleService#Constructor");
     }
-
+    
     setup() {
         this.logService.info("MainLifecycleService#Setup");
-        this._onReady.fire();
     }
 
-    didInit() {
+    serviceDidInit() {
         this.logService.info("MainLifecycleService#Init");
     }
 
-    didReady() {
+    serviceDidReady() {
         this.logService.info("MainLifecycleService#Ready");
     }
+
+    serviceWillDeInit() {
+		console.log("MainLifecycleService#Deinit");	
+	}
 
     registerListener() {
         const beforeQuite = () => {

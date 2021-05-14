@@ -17,15 +17,20 @@ export class RequestService extends BaseService implements IRequestService {
 	) {
 		super();
 		this.configure(configurationService.getValue<IHTTPConfiguration>('section name'));
+		console.log("RequestService#Constructor");
 	}
 
-	didInit() {
+	serviceDidInit() {
         this.logService.info("RequestService#Init");
     }
 	
-    didReady() {
+    serviceDidReady() {
         this.logService.info("RequestService#Ready");
     }
+
+	serviceWillDeInit() {
+		console.log("RequestService#Deinit");	
+	}
 
 	setup() {
 		this.logService.info("RequestService#Setup");

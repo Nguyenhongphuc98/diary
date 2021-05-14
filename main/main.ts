@@ -71,3 +71,7 @@ container.register(
 
 const appCode = container.resolve(MainApplication);
 appCode.startup();
+
+
+
+

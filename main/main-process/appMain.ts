@@ -18,6 +18,7 @@ import { InitWindowOptions } from "../services/types";
 
 let mainWindow: BrowserWindow | null;
 
+
 @injectable()
 export class MainApplication extends BaseService implements IApp, ILifeCycle {
 
@@ -34,6 +35,7 @@ export class MainApplication extends BaseService implements IApp, ILifeCycle {
         super();
         this.openDownloadWindow = this.openDownloadWindow.bind(this);
         this.registerListeners();
+        console.log("MainApplication#constructor");
     }
 
     registerListeners() {
@@ -45,14 +47,13 @@ export class MainApplication extends BaseService implements IApp, ILifeCycle {
             this.logService.info("Shutdown#Call-from-app-main");
         })
 
-        this.lifecycleService.onWillShutdown(() => {
-            this.dispose();
-        })
-
+        // this.lifecycleService.onWillShutdown(() => {
+        //     this.dispose();
+        // })
+        
         app.on('ready', e => this.openMainWindow());
         app.on('activate', (e, hasVisiblewindiws) => this.resume());
-        app.on('will-quit', e => this.deInit());
-
+       
         app.on('remote-require', (event, sender, module) => {
             this.logService.trace('app#on(remote-require): prevented');
             event.preventDefault();
@@ -81,11 +82,11 @@ export class MainApplication extends BaseService implements IApp, ILifeCycle {
         this.logService.info(`AppMain#Setup`);
     }
 
-    didInit() {
+    serviceDidInit() {
         this.logService.info(`AppMain#Init`);
     }
 
-    didReady() {
+    serviceDidReady() {
         this.logService.info(`AppMain#Ready`);
     }
 
@@ -104,9 +105,8 @@ export class MainApplication extends BaseService implements IApp, ILifeCycle {
         this._onResume.fire();
     }
 
-    deInit() {
+    serviceWillDeInit() {
         this.logService.trace('app#deinit');
-        this._onDeInit.fire();
     }
 
     openMainWindow() {
