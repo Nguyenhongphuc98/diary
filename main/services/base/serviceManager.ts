@@ -6,6 +6,11 @@ import "reflect-metadata";
 import { BaseService, IService } from "./service";
 import { app } from "electron";
 import { LinkedList } from "../../common/linkedList";
+import { ClassProvider, container, DependencyContainer, FactoryProvider, InjectionToken, isClassProvider, isFactoryProvider } from "tsyringe";
+import instance from "tsyringe/dist/typings/dependency-container";
+import { constructor, RegistrationOptions } from "tsyringe/dist/typings/types";
+import { DelayedConstructor } from "tsyringe/dist/typings/lazy-helpers";
+import { isConstructorToken } from "tsyringe/dist/typings/providers/injection-token";
 // import { ILifeCycle } from "./lifecycle";
 // import { StateService } from "../state/stateService";
 // import { FileService } from "../file/fileService";
@@ -166,9 +171,13 @@ import { LinkedList } from "../../common/linkedList";
 //     }
 // }
 
+type CtorToken<T> = constructor<T> | DelayedConstructor<T>;
 
 export interface IServiceManager {
-    register(service: BaseService);
+    register<T>(token: InjectionToken<T>, provider: ClassProvider<T>);
+    register<T>(token: InjectionToken<T>, provider: FactoryProvider<T>, instanceType: CtorToken<T>): DependencyContainer;
+
+    resolve<T>(token: InjectionToken<T>): T
 }
 
 export class ServiceManager implements IServiceManager {
@@ -176,56 +185,102 @@ export class ServiceManager implements IServiceManager {
     // One type of service may have multi instances
     private services: LinkedList<BaseService>;
 
+    // Prevent add event to class did register
+    private registered: Set<InjectionToken<IService>>;
+
     // Avoid register even on app too much time
-    private eventQueue: ((e: Electron.Event) => void) [];
+    private eventQueue: ((e: Electron.Event) => void)[];
     private timeout: NodeJS.Timeout | undefined;
 
     constructor() {
         this.services = new LinkedList();
+        this.registered = new Set();
         this.eventQueue = [];
     }
 
-    register(service: BaseService) {
-        this.services.push(service);
- 
-        // Execute after constructor called
-        setImmediate(() => {
-            this._executeFirstPhase(service);
-        })
+    register<T>(token: InjectionToken<T>, provider: FactoryProvider<T> | ClassProvider<T>, instanceType?: CtorToken<T>): any {
+       
+        if (isClassProvider(provider)) {
+            instanceType = provider.useClass;
+        }
 
-        this._triggerEventFromMainProcess(service);
+        // Trigger lifecycle
+        this._addTrigger(token, instanceType!);
+        
+        if (isFactoryProvider(provider)) {
+            return container.register(token, {
+                useFactory: provider.useFactory
+            })
+        } else {
+
+            container.register(token, {
+                useFactory: (c => {
+                    const instance = c.resolve(provider.useClass);
+                    this.services.push(instance as unknown as BaseService);
+                    return instance;
+                })
+            })
+        }
+    }
+
+    // Sometime, we resolve an instance without register before (ex by Ctor)
+    // in that case, we need add trigger for resolve operation
+    resolve<T>(token: InjectionToken<T>): T {
+        if (typeof token === "function") {
+            this._addTrigger(token, token);
+        }
+
+        return container.resolve(token);
+    }
+
+    private _addTrigger<T>(token: InjectionToken<T>, instanceType: CtorToken<T>) {
+        if (!this.registered.has(token)) {
+            this.registered.add(token);
+
+            container.afterResolution(
+                instanceType,
+                (_t, result) => {
+
+                    const s = result as unknown as BaseService;
+                    this._executeFirstPhase(s)
+                    this._triggerEventFromMainProcess(s);
+                },
+                {
+                    frequency: "Always"
+                }
+            );
+        }
     }
 
     private async _executeFirstPhase(service: BaseService) {
         if (service.serviceDidInit) {
-            service.serviceDidInit();
+            service.onInit(service.serviceDidInit);
         }
         // Broadcast for all register known
         service._onInit.fire();
 
-        function fireReady() {
-            if (service.serviceDidReady) {
-                service.serviceDidReady();
-            }
-            service._onReady.fire();
+        if (service.serviceDidReady) {
+            service.onReady(service.serviceDidReady);
         }
 
         if (service.setup) {
+            console.log("============sync===============");
             service.setup();
-            fireReady();
         }
 
         if (service.asyncSetup) {
+            console.log("============async===============");
             await service.asyncSetup();
-            fireReady();
         }
+
+        service._onReady.fire();
     }
 
     private _triggerEventFromMainProcess(service: BaseService) {
-        this.eventQueue.push( e => {
+        this.eventQueue.push(e => {
 
             if (service.serviceWillDeInit) {
-                service.serviceWillDeInit();
+                service.onDeInit(service.serviceWillDeInit);
             }
 
             service._onDeInit.fire();
@@ -239,7 +294,7 @@ export class ServiceManager implements IServiceManager {
                 const tempQueue = this.eventQueue;
                 this.eventQueue = [];
                 this.timeout = undefined;
-                
+
                 app.once('will-quit', e => {
                     tempQueue.forEach(cb => {
                         cb(e);
@@ -248,10 +303,4 @@ export class ServiceManager implements IServiceManager {
             }, 100);
         }
     }
-}
-
-const sm = new ServiceManager();
-
-export function getServiceManager(): IServiceManager {
-    return sm;
 }

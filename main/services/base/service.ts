@@ -1,7 +1,6 @@
 import { Disposable } from "../../common/disposable";
 import { Emitter } from "../../common/event";
 import { ILifeCycle } from "./lifecycle";
-import { getServiceManager } from "./serviceManager";
 
 export interface IService {
 
@@ -11,11 +10,14 @@ export interface IService {
 
 export abstract class BaseService extends Disposable implements ILifeCycle, IService {
 
-    private manager = getServiceManager();
-
     constructor() {
         super();
-        this.manager.register(this);
+
+        this.serviceDidInit = this.serviceDidInit?.bind(this);
+        this.serviceDidReady = this.serviceDidReady?.bind(this);
+        this.serviceWillPause = this.serviceWillPause?.bind(this);
+        this.serviceWillResume = this.serviceWillResume?.bind(this);
+        this.serviceWillDeInit = this.serviceWillDeInit?.bind(this);
     }
 
     readonly _onInit = this._register(new Emitter<void>());

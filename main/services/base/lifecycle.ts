@@ -1,8 +1,14 @@
-import { Event } from "../../common/event";
+import { Emitter, Event } from "../../common/event";
 
 export interface ILifeCycle {
 
     // Use to hook block code
+    // readonly _onInit: Emitter<void>;
+    // readonly _onReady: Emitter<void>;
+    // readonly _onPause: Emitter<void>;
+    // readonly _onResume: Emitter<void>;
+    // readonly _onDeInit: Emitter<void>;
+
     onInit: Event<void>;
     onReady: Event<void>;
     onPause: Event<void>;

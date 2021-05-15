@@ -12,66 +12,67 @@ import { MainApplication } from "./main-process/appMain";
 import { LogLevel } from "./services/log/log";
 import { URI } from "./common/uri";
 import { IDownload } from "./services/download/download";
+import { ServiceManager } from "./services/base/serviceManager";
 
 // Begin init and setup services ===================================================
 // ==================================================================================
 
-container.register(
+const sm = new ServiceManager();
+
+sm.register(
 	"IFileService", {
 	useClass: FileService
 });
 
-container.register(
+sm.register(
 	"IStateService", {
 	useClass: StateService
 });
 
-container.register(
-	"ILogService", {
-	useFactory: instanceCachingFactory<FileLogService>(c => {
+sm.register("ILogService",
+	{
+		useFactory: c => {
+			const fileService = c.resolve(FileService);
+			const uri = new URI('uri')
+			return new FileLogService('internal log', uri, LogLevel.Info, fileService);
+		}
+	},
+	FileLogService
+);
 
-		const fileService = c.resolve(FileService);
-		const uri = new URI('uri')
-		return new FileLogService('internal log', uri, LogLevel.Info, fileService);
-	})
-});
-
-container.register(
+sm.register(
 	"IConfiguration", {
 	useClass: ConfigurationService
 });
 
-container.register(
+sm.register(
 	"IEnvironmentService", {
 	useClass: EnviromentService
 });
 
-container.register(
+sm.register(
 	"IRequestService", {
 	useClass: RequestService
 });
 
-container.register(
+sm.register(
 	"ILifecycleMainService", {
 	useClass: MainLifecycleService
 });
 
-container.register(
-	"IDownload", {
+sm.register("IDownload", {
 	useFactory: instanceCachingFactory<Promise<IDownload>>(async c => {
 
 		const DownloadService = (await import("./services/download/downloadService")).DownloadService;
-		const requestService = c.resolve(RequestService);
-		const fileService = c.resolve(FileService);
+		const requestService = sm.resolve(RequestService);
+		const fileService = sm.resolve(FileService);
 
 		return new DownloadService(requestService, fileService);
 	})
-});
+},
+
+);
 // End init and setup services ===================================================
 
 const appCode = container.resolve(MainApplication);
 appCode.startup();
-
-
-
-

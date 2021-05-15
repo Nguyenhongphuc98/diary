@@ -64,6 +64,12 @@ export class FileService extends BaseService implements IFileService {
 
     createFile(resource: URI, buffer?: Buffer, options?: ICreateFileOptions): Promise<IBaseStat> {
         console.log('did create file ' +resource);
+        let t = 0;
+        while(t<99) {
+            t++;
+            console.log(t);
+            
+        }
         return Promise.resolve({
             resource: new URI(''),
             name: 'a'

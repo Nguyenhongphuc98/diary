@@ -135,7 +135,7 @@ export class StateService extends BaseService implements IStateService {
 	) {
 		super();
 		this.fileStorage = new FileStorage(environmentService.userDataPath /* combine with StateService.STATE_FILE*/, error => logService.error(error));
-		console.log("StateService#Constructor");
+		this.logService.info("StateService#Constructor");
 	}
 
 	serviceDidInit() {

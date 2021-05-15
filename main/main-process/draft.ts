@@ -82,3 +82,26 @@ const t = (
 
 const rocket = new Rocket();
 rocket.launch();
+
+class A {
+	constructor() {
+		this.out();
+	}
+
+	out() {
+		console.log("A");
+	}
+}
+
+class B extends A {
+	constructor() {
+		super();
+	}
+
+	out() {
+		console.log("B");
+	}
+}
+
+const tt = new B();
+tt.out();

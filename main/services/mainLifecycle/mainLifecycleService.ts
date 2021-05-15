@@ -43,7 +43,7 @@ export class MainLifecycleService extends BaseService implements ILifecycleMainS
     ) {
         super();
         this.registerListener();
-        console.log("MainLifecycleService#Constructor");
+        this.logService.info("MainLifecycleService#Constructor");
     }
     
     setup() {

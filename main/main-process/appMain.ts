@@ -35,7 +35,7 @@ export class MainApplication extends BaseService implements IApp, ILifeCycle {
         super();
         this.openDownloadWindow = this.openDownloadWindow.bind(this);
         this.registerListeners();
-        console.log("MainApplication#constructor");
+        logService.info("MainApplication#constructor");
     }
 
     registerListeners() {
