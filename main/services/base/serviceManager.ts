@@ -11,6 +11,7 @@ import instance from "tsyringe/dist/typings/dependency-container";
 import { constructor, RegistrationOptions } from "tsyringe/dist/typings/types";
 import { DelayedConstructor } from "tsyringe/dist/typings/lazy-helpers";
 import { isConstructorToken } from "tsyringe/dist/typings/providers/injection-token";
+import { FileLogService } from "../log/fileLogService";
 // import { ILifeCycle } from "./lifecycle";
 // import { StateService } from "../state/stateService";
 // import { FileService } from "../file/fileService";
@@ -198,25 +199,32 @@ export class ServiceManager implements IServiceManager {
         this.eventQueue = [];
     }
 
-    register<T>(token: InjectionToken<T>, provider: FactoryProvider<T> | ClassProvider<T>, instanceType?: CtorToken<T>): any {
-       
-        if (isClassProvider(provider)) {
-            instanceType = provider.useClass;
-        }
-
-        // Trigger lifecycle
-        this._addTrigger(token, instanceType!);
+    register<T>(token: InjectionToken<T>, provider: FactoryProvider<T> | ClassProvider<T>): any {
         
         if (isFactoryProvider(provider)) {
+           
             return container.register(token, {
-                useFactory: provider.useFactory
+                useFactory: (c => {
+                    const instance =  provider.useFactory(c);
+
+                    // This maybe is a async factory, will return a promise
+                    if (instance instanceof Promise) {
+                        instance.then(value => {
+                            this._afterResolve(value as unknown as BaseService);
+                        });
+                    } else {
+                        this._afterResolve(instance as unknown as BaseService);
+                    }
+
+                    return instance;
+                })
             })
         } else {
 
             container.register(token, {
                 useFactory: (c => {
                     const instance = c.resolve(provider.useClass);
-                    this.services.push(instance as unknown as BaseService);
+                    this._afterResolve(instance as unknown as BaseService);
                     return instance;
                 })
             })
@@ -226,30 +234,39 @@ export class ServiceManager implements IServiceManager {
     // Sometime, we resolve an instance without register before (ex by Ctor)
     // in that case, we need add trigger for resolve operation
     resolve<T>(token: InjectionToken<T>): T {
+        const service = container.resolve(token);
+    
+        // Resolve by Cto mean no use register before
         if (typeof token === "function") {
-            this._addTrigger(token, token);
+            this._afterResolve(service as unknown as BaseService);
         }
-
-        return container.resolve(token);
+        return service;
     }
 
-    private _addTrigger<T>(token: InjectionToken<T>, instanceType: CtorToken<T>) {
-        if (!this.registered.has(token)) {
-            this.registered.add(token);
+    // Trigger lifecycle
+    // private _addTrigger<T>(token: InjectionToken<T>, instanceType: CtorToken<T>) {
+    //     if (!this.registered.has(token)) {
+    //         this.registered.add(token);
 
-            container.afterResolution(
-                instanceType,
-                (_t, result) => {
+    //         container.afterResolution(
+    //             instanceType,
+    //             (_t, result) => {
 
-                    const s = result as unknown as BaseService;
-                    this._executeFirstPhase(s)
-                    this._triggerEventFromMainProcess(s);
-                },
-                {
-                    frequency: "Always"
-                }
-            );
-        }
+    //                 const s = result as unknown as BaseService;
+    //                 this._executeFirstPhase(s)
+    //                 this._triggerEventFromMainProcess(s);
+    //             },
+    //             {
+    //                 frequency: "Always"
+    //             }
+    //         );
+    //     }
+    // }
+
+    private _afterResolve(service: BaseService) {
+        this.services.push(service);
+        this._executeFirstPhase(service)
+        this._triggerEventFromMainProcess(service);
     }
 
     private async _executeFirstPhase(service: BaseService) {
@@ -264,14 +281,17 @@ export class ServiceManager implements IServiceManager {
         }
 
         if (service.setup) {
-            console.log("============sync===============");
             service.setup();
         }
 
         if (service.asyncSetup) {
-            console.log("============async===============");
             await service.asyncSetup();
         }
+
+        // if (service instanceof FileLogService) {
+        //     console.log(service);
+            
+        // }
 
         service._onReady.fire();
     }
@@ -303,4 +323,10 @@ export class ServiceManager implements IServiceManager {
             }, 100);
         }
     }
+}
+
+
+const serviceManager = new ServiceManager();
+export function getServiceManager() {
+    return serviceManager;
 }

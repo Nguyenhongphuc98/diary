@@ -12,9 +12,10 @@ import { injectable, inject, container } from "tsyringe";
 import { Emitter, Event } from "../common/event";
 import { Disposable } from "../common/disposable";
 import { BaseService } from "../services/base/service";
-import { DownloadWrapper, IDownload } from "../services/download/download";
+import { IDownload } from "../services/download/download";
 import { URI } from "../common/uri";
 import { InitWindowOptions } from "../services/types";
+import { getServiceManager } from "../services/base/serviceManager";
 
 let mainWindow: BrowserWindow | null;
 
@@ -152,8 +153,7 @@ export class MainApplication extends BaseService implements IApp, ILifeCycle {
     }
 
     setupDownloadService(): Promise<IDownload> {
-        const downloadWrapper = container.resolve(DownloadWrapper);
-        return downloadWrapper.setup();
+        return getServiceManager().resolve("IDownload");
     }
 
     openDownloadWindow() {
