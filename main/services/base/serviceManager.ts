@@ -10,6 +10,7 @@ import { ClassProvider, container, DependencyContainer, FactoryProvider, Injecti
 import { constructor } from "tsyringe/dist/typings/types";
 import { DelayedConstructor } from "tsyringe/dist/typings/lazy-helpers";
 import { castPromise, likePromise } from "../../common/utils";
+import { LifeCyclePhase } from "./lifecycle";
 // import { ILifeCycle } from "./lifecycle";
 // import { StateService } from "../state/stateService";
 // import { FileService } from "../file/fileService";
@@ -165,32 +166,20 @@ export class ServiceManager implements IServiceManager {
     
         // Resolve by Cto mean no use register before
         if (typeof token === "function") {
-            this._afterResolve(service as unknown as BaseService);
+            const s = service as unknown as BaseService;
+            
+            this._afterResolve(s);
         }
         return service;
     }
 
-    // Trigger lifecycle
-    // private _addTrigger<T>(token: InjectionToken<T>, instanceType: CtorToken<T>) {
-    //     if (!this.registered.has(token)) {
-    //         this.registered.add(token);
-
-    //         container.afterResolution(
-    //             instanceType,
-    //             (_t, result) => {
-
-    //                 const s = result as unknown as BaseService;
-    //                 this._executeFirstPhase(s)
-    //                 this._triggerEventFromMainProcess(s);
-    //             },
-    //             {
-    //                 frequency: "Always"
-    //             }
-    //         );
-    //     }
-    // }
-
+    // Never use after resolution because it load code for object type
+    // Will not get benefit of dynamic load register.
     private _afterResolve(service: BaseService) {
+        // Don't need process for singletone if it did process before
+        if (service.phase > LifeCyclePhase.init) {
+            return;
+        }
         this.services.push(service);
         this._executeFirstPhase(service)
         this._triggerEventFromMainProcess(service);
@@ -202,11 +191,13 @@ export class ServiceManager implements IServiceManager {
         }
         // Broadcast for all register known
         service._onInit.fire();
+        service.phase = LifeCyclePhase.init;
 
         if (service.serviceDidReady) {
             service.onReady(service.serviceDidReady);
         }
 
+        service.phase = LifeCyclePhase.setup;
         if (service.setup) {
             service.setup();
         }
@@ -221,6 +212,7 @@ export class ServiceManager implements IServiceManager {
         // }
 
         service._onReady.fire();
+        service.phase = LifeCyclePhase.ready;
     }
 
     private _triggerEventFromMainProcess(service: BaseService) {
@@ -228,6 +220,7 @@ export class ServiceManager implements IServiceManager {
 
             service._onDepose.fire();
             service.dispose();
+            service.phase = LifeCyclePhase.dispose;
 
             this.services.remove(service);
         });

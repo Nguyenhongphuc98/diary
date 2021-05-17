@@ -1,6 +1,6 @@
 import { Disposable } from "../../common/disposable";
 import { Emitter } from "../../common/event";
-import { ILifeCycle } from "./lifecycle";
+import { ILifeCycle, LifeCyclePhase } from "./lifecycle";
 
 export interface IService {
 
@@ -9,15 +9,6 @@ export interface IService {
 }
 
 export abstract class BaseService extends Disposable implements ILifeCycle, IService {
-
-    constructor() {
-        super();
-
-        this.serviceDidInit = this.serviceDidInit?.bind(this);
-        this.serviceDidReady = this.serviceDidReady?.bind(this);
-        this.serviceWillPause = this.serviceWillPause?.bind(this);
-        this.serviceWillResume = this.serviceWillResume?.bind(this);
-    }
 
     readonly _onInit = this._register(new Emitter<void>());
 	readonly onInit = this._onInit.event;
@@ -33,6 +24,17 @@ export abstract class BaseService extends Disposable implements ILifeCycle, ISer
     
     readonly _onDepose = this._register(new Emitter<void>());
 	readonly onDepose = this._onDepose.event;
+
+    phase: LifeCyclePhase = LifeCyclePhase.unknown;
+
+    constructor() {
+        super();
+
+        this.serviceDidInit = this.serviceDidInit?.bind(this);
+        this.serviceDidReady = this.serviceDidReady?.bind(this);
+        this.serviceWillPause = this.serviceWillPause?.bind(this);
+        this.serviceWillResume = this.serviceWillResume?.bind(this);
+    }
 
     setup?(): void;
     async asyncSetup?(): Promise<void>;

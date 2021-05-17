@@ -21,3 +21,12 @@ export interface ILifeCycle {
     serviceWillPause?(e: void): any;
     serviceWillResume?(e: void): any;
 }
+
+// By default it will increase from 0
+export enum LifeCyclePhase {
+    unknown,
+    init, // After ctor called
+    setup, // In setup
+    ready, // After setup
+    dispose 
+}
