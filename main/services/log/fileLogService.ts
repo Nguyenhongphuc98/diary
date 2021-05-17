@@ -27,9 +27,10 @@ export class FileLogService extends AbstractLog implements ILogService {
         console.log("FileLogService#Ready");	
     }
 	
-	serviceWillDeInit() {
-		console.log("FileLogService#Deinit");	
-	}
+	dispose() {
+        console.log("FileLogService#dispose");	
+        super.dispose();
+    }
 
 	// If not init at constructor, should be called before use any other method
 	async asyncSetup(): Promise<void> {

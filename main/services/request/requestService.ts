@@ -28,10 +28,11 @@ export class RequestService extends BaseService implements IRequestService {
         this.logService.info("RequestService#Ready");
     }
 
-	serviceWillDeInit() {
-		console.log("RequestService#Deinit");	
-	}
-
+	dispose() {
+        console.log("RequestService#dispose");	
+        super.dispose();
+    }
+	
 	setup() {
 		this.logService.info("RequestService#Setup");
 	}

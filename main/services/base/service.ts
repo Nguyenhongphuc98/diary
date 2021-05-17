@@ -17,7 +17,6 @@ export abstract class BaseService extends Disposable implements ILifeCycle, ISer
         this.serviceDidReady = this.serviceDidReady?.bind(this);
         this.serviceWillPause = this.serviceWillPause?.bind(this);
         this.serviceWillResume = this.serviceWillResume?.bind(this);
-        this.serviceWillDeInit = this.serviceWillDeInit?.bind(this);
     }
 
     readonly _onInit = this._register(new Emitter<void>());
@@ -32,8 +31,8 @@ export abstract class BaseService extends Disposable implements ILifeCycle, ISer
     readonly _onResume = this._register(new Emitter<void>());
 	readonly onResume = this._onResume.event;
     
-    readonly _onDeInit = this._register(new Emitter<void>());
-	readonly onDeInit = this._onDeInit.event;
+    readonly _onDepose = this._register(new Emitter<void>());
+	readonly onDepose = this._onDepose.event;
 
     setup?(): void;
     async asyncSetup?(): Promise<void>;
@@ -42,5 +41,4 @@ export abstract class BaseService extends Disposable implements ILifeCycle, ISer
     serviceDidReady?(e: void): any;
     serviceWillPause?(e: void): any;
     serviceWillResume?(e: void): any;
-    serviceWillDeInit?(e: void): any;
 }

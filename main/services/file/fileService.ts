@@ -18,9 +18,10 @@ export class FileService extends BaseService implements IFileService {
         console.log("FileService#Ready");	
     }
 
-    serviceWillDeInit() {
-		console.log("FileService#Deinit");	
-	}
+    dispose() {
+        console.log("FileService#dispose");	
+        super.dispose();
+    }
 
     setup() {
         console.log('FileService#Setup');
@@ -34,12 +35,18 @@ export class FileService extends BaseService implements IFileService {
         return true;
     }
 
-    read(resource: URI, options: IReadFileOptions) {
-        
+    async read(resource: URI, options: IReadFileOptions): Promise<IBaseStat> {
+        return Promise.resolve({
+            resource: new URI(''),
+            name: 'a'
+        });
     }
 
-    write(resource: URI, buffer: IBuffer) {
-        
+    async write(resource: URI, buffer: IBuffer): Promise<IBaseStat> {
+        return Promise.resolve({
+            resource: new URI(''),
+            name: 'a'
+        });
     }
 
     canMove(source: URI, target: URI, overwrite?: boolean): Promise<true | Error> {

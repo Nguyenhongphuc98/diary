@@ -18,8 +18,9 @@ export class ConfigurationService extends BaseService implements IConfiguration 
         console.log("ConfigurationService#Ready");	
     }
 
-    serviceWillDeInit() {
-        console.log("ConfigurationService#Deinit");	
+    dispose() {
+        console.log("ConfigurationService#dispose");	
+        super.dispose();
     }
 
     setup() {

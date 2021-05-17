@@ -19,10 +19,11 @@ export class EnviromentService extends BaseService implements IEnvironmentServic
         console.log("EnviromentService#Ready");	
     }
 
-    serviceWillDeInit() {
-		console.log("EnviromentService#Deinit");	
-	}
-
+    dispose() {
+        console.log("EnviromentService#dispose");	
+        super.dispose();
+    }
+   
     setup() {
         console.log('EnviromentService#Setup');
     }

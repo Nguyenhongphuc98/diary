@@ -6,9 +6,9 @@ export interface IFileService {
 
     canHandleResource(resource: URI): boolean;
 
-    read(resource: URI, options: IReadFileOptions);
+    read(resource: URI, options: IReadFileOptions): Promise<IBaseStat>;
 
-    write(resource: URI, buffer: IBuffer);
+    write(resource: URI, buffer: IBuffer): Promise<IBaseStat>;
 
 	move(source: URI, target: URI, overwrite?: boolean): Promise<IBaseStat>;
 

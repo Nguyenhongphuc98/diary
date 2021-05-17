@@ -7,11 +7,9 @@ import { BaseService, IService } from "./service";
 import { app } from "electron";
 import { LinkedList } from "../../common/linkedList";
 import { ClassProvider, container, DependencyContainer, FactoryProvider, InjectionToken, isClassProvider, isFactoryProvider } from "tsyringe";
-import instance from "tsyringe/dist/typings/dependency-container";
-import { constructor, RegistrationOptions } from "tsyringe/dist/typings/types";
+import { constructor } from "tsyringe/dist/typings/types";
 import { DelayedConstructor } from "tsyringe/dist/typings/lazy-helpers";
-import { isConstructorToken } from "tsyringe/dist/typings/providers/injection-token";
-import { FileLogService } from "../log/fileLogService";
+import { castPromise, likePromise } from "../../common/utils";
 // import { ILifeCycle } from "./lifecycle";
 // import { StateService } from "../state/stateService";
 // import { FileService } from "../file/fileService";
@@ -23,8 +21,6 @@ import { FileLogService } from "../log/fileLogService";
 //     predicateAwareClassFactory,
 //     instanceCachingFactory
 // } from "tsyringe";
-
-
 
 // export function AutoManage<T extends { new(...args: any[]): {} }>(): any {
 
@@ -101,77 +97,6 @@ import { FileLogService } from "../log/fileLogService";
 //     return descriptor;
 // };
 
-
-
-// export class ServiceManager implements IServiceManager {
-
-//     private colections: Map<string, BaseService>;
-
-//     private registered: Set<string>;
-
-//     constructor() {
-//         this.colections = new Map();
-//         this.registered = new Set();
-//     }
-
-//     register<T>(token: InjectionToken<T>, provider: ClassProvider<T>, options?: RegistrationOptions) {
-//         const tokenStr = token as string;
-//         this._observerInit(tokenStr, provider);
-
-
-//         // Each time resolve will create new instance
-//         container.register(
-//             token as string, {
-//             useFactory: instanceCachingFactory(c => {
-
-//                 return c.resolve(provider.useClass);
-//             })
-//         });
-//     }
-
-//     private _observerInit<T>(token: string, provider: ClassProvider<T>) {
-//         if (!this.registered.has(token)) {
-//             this.registered.add(token);
-
-//             container.afterResolution(
-//                 provider.useClass,
-//                 (_t, result) => {
-
-//                     console.log("did resolve");
-
-
-//                     {
-//                         // const service = (result as unknown as BaseService);
-
-//                         // if (service) {
-//                         //     if (service.didInit) {
-//                         //         service.onInit(service.didInit);
-//                         //     }
-
-//                         //     // fire to make sure all block code hooked can be trigger.
-//                         //     service._onInit.fire();
-
-//                         //     if (service.setup) {
-//                         //         service.setup();
-
-//                         //         if (service.didReady) {
-//                         //             service.onReady(service.didReady);
-//                         //         }
-
-//                         //         // fire to make sure all block code hooked can be trigger.
-//                         //         service._onReady.fire();
-//                         //     }
-//                         // }
-//                     }
-//                 },
-//                 {
-//                     frequency: "Always"
-//                 }
-//             );
-//         }
-//     }
-// }
-
 type CtorToken<T> = constructor<T> | DelayedConstructor<T>;
 
 export interface IServiceManager {
@@ -208,8 +133,10 @@ export class ServiceManager implements IServiceManager {
                     const instance =  provider.useFactory(c);
 
                     // This maybe is a async factory, will return a promise
-                    if (instance instanceof Promise) {
-                        instance.then(value => {
+                    // If it behave like promise, we assume it is type of promise <duck typing>
+                    const promise = castPromise(instance);
+                    if (promise) {
+                        promise.then(value => {
                             this._afterResolve(value as unknown as BaseService);
                         });
                     } else {
@@ -299,11 +226,7 @@ export class ServiceManager implements IServiceManager {
     private _triggerEventFromMainProcess(service: BaseService) {
         this.eventQueue.push(e => {
 
-            if (service.serviceWillDeInit) {
-                service.onDeInit(service.serviceWillDeInit);
-            }
-
-            service._onDeInit.fire();
+            service._onDepose.fire();
             service.dispose();
 
             this.services.remove(service);

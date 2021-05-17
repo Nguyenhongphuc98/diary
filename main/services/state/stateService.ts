@@ -146,9 +146,10 @@ export class StateService extends BaseService implements IStateService {
         this.logService.info("StateService#Ready");
     }
 
-	serviceWillDeInit() {
-		console.log("StateService#Deinit");	
-	}
+	dispose() {
+        console.log("StateService#dispose");	
+        super.dispose();
+    }
 
 	setup(): Promise<void> {
 		this.logService.info("StateService#Setup")

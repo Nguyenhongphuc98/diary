@@ -5,12 +5,10 @@ import { ILogService } from "../services/log/log";
 import { ILifecycleMainService } from "../services/mainLifecycle/mainLifecycle";
 import { IStateService } from "../services/state/state";
 import { IApp } from "../services/base/app";
-import { app, BrowserWindow, ipcMain, IpcMainEvent } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import * as path from "path";
 import * as url from "url";
-import { injectable, inject, container } from "tsyringe";
-import { Emitter, Event } from "../common/event";
-import { Disposable } from "../common/disposable";
+import { injectable, inject } from "tsyringe";
 import { BaseService } from "../services/base/service";
 import { IDownload } from "../services/download/download";
 import { URI } from "../common/uri";
@@ -106,8 +104,9 @@ export class MainApplication extends BaseService implements IApp, ILifeCycle {
         this._onResume.fire();
     }
 
-    serviceWillDeInit() {
-        this.logService.trace('app#deinit');
+    dispose() {
+        this.logService.trace('app#dispose');
+        super.dispose();
     }
 
     openMainWindow() {

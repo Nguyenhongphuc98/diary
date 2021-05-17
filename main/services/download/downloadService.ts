@@ -24,8 +24,9 @@ export class DownloadService extends BaseService implements IDownload {
         console.log("DownloadService#Ready");	
     }
 
-	serviceWillDeInit() {
-        console.log("DownloadService#Deinit");	
+	dispose() {
+        console.log("DownloadService#dispose");	
+        super.dispose();
     }
 
 	setup() {

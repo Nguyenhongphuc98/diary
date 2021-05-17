@@ -13,12 +13,11 @@ export interface ILifeCycle {
     onReady: Event<void>;
     onPause: Event<void>;
     onResume: Event<void>;
-    onDeInit: Event<void>;
+    onDepose: Event<void>;
 
     // use to observer when event fired
     serviceDidInit?(e: void): any;
     serviceDidReady?(e: void): any;
     serviceWillPause?(e: void): any;
     serviceWillResume?(e: void): any;
-    serviceWillDeInit?(e: void): any;
 }

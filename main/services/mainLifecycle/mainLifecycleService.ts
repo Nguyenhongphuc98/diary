@@ -57,10 +57,10 @@ export class MainLifecycleService extends BaseService implements ILifecycleMainS
     serviceDidReady() {
         this.logService.info("MainLifecycleService#Ready");
     }
-
-    serviceWillDeInit() {
-		console.log("MainLifecycleService#Deinit");	
-	}
+    dispose() {
+        console.log("MainLifecycleService#dispose");	
+        super.dispose();
+    }
 
     registerListener() {
         const beforeQuite = () => {
