@@ -3,8 +3,10 @@ import * as fs from 'fs';
 import { isUndefined, isUndefinedOrNull } from "../../common/utils";
 import { IStateService } from "./state";
 import { ILogService } from "../log/log";
-import { injectable, inject, singleton } from "tsyringe";
+import { inject, singleton } from "tsyringe";
 import { BaseService } from "../base/service";
+import { containerConfig as config } from "../base/token";
+
 
 type StorageDatabase = { [key: string]: any; };
 
@@ -130,8 +132,8 @@ export class StateService extends BaseService implements IStateService {
 	private fileStorage: FileStorage;
 
 	constructor(
-		@inject("IEnvironmentService") private readonly environmentService: IEnvironmentService,
-		@inject("ILogService") private readonly logService: ILogService
+		@inject(config.TOKEN_IENVIROMENT.value) private readonly environmentService: IEnvironmentService,
+		@inject(config.TOKEN_ILOG.value) private readonly logService: ILogService
 	) {
 		super();
 		this.fileStorage = new FileStorage(environmentService.userDataPath /* combine with StateService.STATE_FILE*/, error => logService.error(error));

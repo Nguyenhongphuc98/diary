@@ -5,6 +5,8 @@ import { injectable, inject } from "tsyringe";
 import { Emitter } from "../../common/event";
 import { BaseService } from "../base/service";
 import { app } from "electron";
+import { containerConfig as config } from "../base/token";
+
 
 @injectable()
 export class MainLifecycleService extends BaseService implements ILifecycleMainService {
@@ -38,8 +40,8 @@ export class MainLifecycleService extends BaseService implements ILifecycleMainS
     readonly onError = this._onError.event;
 
     constructor(
-        @inject("ILogService") private readonly logService: ILogService,
-        @inject("IStateService") private readonly stateService: IStateService
+        @inject(config.TOKEN_ILOG.value) private readonly logService: ILogService,
+        @inject(config.TOKEN_ISTATE.value) private readonly stateService: IStateService
     ) {
         super();
         this.registerListener();

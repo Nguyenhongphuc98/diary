@@ -11,17 +11,8 @@ import { constructor } from "tsyringe/dist/typings/types";
 import { DelayedConstructor } from "tsyringe/dist/typings/lazy-helpers";
 import { castPromise, likePromise } from "../../common/utils";
 import { LifeCyclePhase } from "./lifecycle";
-// import { ILifeCycle } from "./lifecycle";
-// import { StateService } from "../state/stateService";
-// import { FileService } from "../file/fileService";
-// import {Ctor} from "../types"
-// import {
-//     container,
-//     ClassProvider,
-//     InjectionToken,
-//     predicateAwareClassFactory,
-//     instanceCachingFactory
-// } from "tsyringe";
+import { CustomToken } from "./token";
+
 
 // export function AutoManage<T extends { new(...args: any[]): {} }>(): any {
 
@@ -98,6 +89,7 @@ import { LifeCyclePhase } from "./lifecycle";
 //     return descriptor;
 // };
 
+
 type CtorToken<T> = constructor<T> | DelayedConstructor<T>;
 
 export interface IServiceManager {
@@ -125,11 +117,13 @@ export class ServiceManager implements IServiceManager {
         this.eventQueue = [];
     }
 
-    register<T>(token: InjectionToken<T>, provider: FactoryProvider<T> | ClassProvider<T>): any {
+    register<T>(token: InjectionToken<T> | CustomToken<T>, provider: FactoryProvider<T> | ClassProvider<T>): any {
+
+        const resolvedToken = this._processToken(token);
         
         if (isFactoryProvider(provider)) {
            
-            return container.register(token, {
+            return container.register(resolvedToken, {
                 useFactory: (c => {
                     const instance =  provider.useFactory(c);
 
@@ -149,7 +143,7 @@ export class ServiceManager implements IServiceManager {
             })
         } else {
 
-            container.register(token, {
+            container.register(resolvedToken, {
                 useFactory: (c => {
                     const instance = c.resolve(provider.useClass);
                     this._afterResolve(instance as unknown as BaseService);
@@ -161,8 +155,8 @@ export class ServiceManager implements IServiceManager {
 
     // Sometime, we resolve an instance without register before (ex by Ctor)
     // in that case, we need add trigger for resolve operation
-    resolve<T>(token: InjectionToken<T>): T {
-        const service = container.resolve(token);
+    resolve<T>(token: InjectionToken<T>| CustomToken<T>): T {
+        const service = container.resolve(this._processToken(token));
     
         // Resolve by Cto mean no use register before
         if (typeof token === "function") {
@@ -173,10 +167,14 @@ export class ServiceManager implements IServiceManager {
         return service;
     }
 
+    private _processToken<T>(token: InjectionToken<T>| CustomToken<T>): InjectionToken<T> {
+        return token instanceof CustomToken ? token.value : token;
+    }
+
     // Never use after resolution because it load code for object type
     // Will not get benefit of dynamic load register.
     private _afterResolve(service: BaseService) {
-        // Don't need process for singletone if it did process before
+        // Don't need process for obj did process before (singleton)
         if (service.phase > LifeCyclePhase.init) {
             return;
         }

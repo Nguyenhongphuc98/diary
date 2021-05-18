@@ -3,6 +3,8 @@ import { ILogService } from '../log/log';
 import { IRequestService, IRequestContext, IRequestOptions, IHTTPConfiguration } from './request';
 import { injectable, inject } from "tsyringe";
 import { BaseService } from '../base/service';
+import { containerConfig as config } from "../base/token";
+
 
 @injectable()
 export class RequestService extends BaseService implements IRequestService {
@@ -12,8 +14,8 @@ export class RequestService extends BaseService implements IRequestService {
 	private authorization?: string;
 
 	constructor(
-		@inject("IConfiguration") configurationService: IConfiguration,
-		@inject("ILogService") private readonly logService: ILogService
+		@inject(config.TOKEN_ICONFIGURATION.value) configurationService: IConfiguration,
+		@inject(config.TOKEN_ILOG.value) private readonly logService: ILogService
 	) {
 		super();
 		this.configure(configurationService.getValue<IHTTPConfiguration>('section name'));

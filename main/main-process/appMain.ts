@@ -14,6 +14,8 @@ import { IDownload } from "../services/download/download";
 import { URI } from "../common/uri";
 import { InitWindowOptions } from "../services/types";
 import { getServiceManager } from "../services/base/serviceManager";
+import { containerConfig as config } from "../services/base/token";
+
 
 let mainWindow: BrowserWindow | null;
 
@@ -25,11 +27,11 @@ export class MainApplication extends BaseService implements IApp, ILifeCycle {
     private downloadWindow: BrowserWindow | undefined;
 
     constructor(
-        @inject("IConfiguration") private readonly configuration: IConfiguration,
-        @inject("IEnvironmentService") private readonly enviromentService: IEnvironmentService,
-        @inject("ILifecycleMainService") private readonly lifecycleService: ILifecycleMainService,
-        @inject("IStateService") private readonly stateService: IStateService,
-        @inject("ILogService") private readonly logService: ILogService
+        @inject(config.TOKEN_ICONFIGURATION.value) private readonly configuration: IConfiguration,
+        @inject(config.TOKEN_IENVIROMENT.value) private readonly enviromentService: IEnvironmentService,
+        @inject(config.TOKEN_ILIFECYCLEMAIN.value) private readonly lifecycleService: ILifecycleMainService,
+        @inject(config.TOKEN_ISTATE.value) private readonly stateService: IStateService,
+        @inject(config.TOKEN_ILOG.value) private readonly logService: ILogService
     ) {
         super();
         this.openDownloadWindow = this.openDownloadWindow.bind(this);

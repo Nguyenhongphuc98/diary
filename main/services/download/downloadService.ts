@@ -4,13 +4,14 @@ import { IRequestService } from "../request/request";
 import { IDownload } from "./download";
 import {inject, injectable} from "tsyringe";
 import { BaseService } from "../base/service";
+import { containerConfig as config } from "../base/token";
 
 @injectable()
 export class DownloadService extends BaseService implements IDownload {
 
 	constructor(
-		@inject("IRequestService") private readonly requestService: IRequestService,
-		@inject("IFileService") private readonly fileService: IFileService
+		@inject(config.TOKEN_IREQUEST.value) private readonly requestService: IRequestService,
+		@inject(config.TOKEN_IFILE.value) private readonly fileService: IFileService
 	) { 
         super();
 		console.log("DownloadService#Constructor");	

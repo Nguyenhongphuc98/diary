@@ -2,6 +2,8 @@ import { URI } from "../../common/uri";
 import { IFileService } from "../file/file";
 import { ILogService, LogLevel, AbstractLog } from "./log";
 import { injectable, inject } from "tsyringe";
+import { containerConfig as config } from "../base/token";
+
 
 @injectable()
 export class FileLogService extends AbstractLog implements ILogService {
@@ -12,7 +14,7 @@ export class FileLogService extends AbstractLog implements ILogService {
 		private readonly name: string,
 		private readonly resource: URI,
 		level: LogLevel,
-		@inject("IFileService") private readonly fileService: IFileService
+		@inject(config.TOKEN_IFILE.value) private readonly fileService: IFileService
 	) {
 		super();
 		this.setLevel(level);
