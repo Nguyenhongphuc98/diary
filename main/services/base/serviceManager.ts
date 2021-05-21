@@ -11,7 +11,8 @@ import { constructor } from "tsyringe/dist/typings/types";
 import { DelayedConstructor } from "tsyringe/dist/typings/lazy-helpers";
 import { castPromise, likePromise } from "../../common/utils";
 import { LifeCyclePhase } from "./lifecycle";
-import { CustomToken } from "./token";
+import { CustomPromiseToken, CustomToken, STLikeService } from "./token";
+import { CachePromise } from "../types";
 
 
 // export function AutoManage<T extends { new(...args: any[]): {} }>(): any {
@@ -93,11 +94,19 @@ import { CustomToken } from "./token";
 type CtorToken<T> = constructor<T> | DelayedConstructor<T>;
 
 export interface IServiceManager {
-    register<T>(token: InjectionToken<T>, provider: ClassProvider<T>);
-    register<T>(token: InjectionToken<T>, provider: FactoryProvider<T>, instanceType: CtorToken<T>): DependencyContainer;
+    register<T, T1 extends CachePromise<T>>(token: InjectionToken<T> | CustomPromiseToken<T1, T> | CustomToken<T>, provider: FactoryProvider<T1 | T>): DependencyContainer;
+    register<T, T1 extends CachePromise<T>>(token: InjectionToken<T> | CustomPromiseToken<T1, T> | CustomToken<T>, provider: ClassProvider<T>);
+    
 
-    resolve<T>(token: InjectionToken<T>): T
+    resolve<T, T1 extends CachePromise<T>>(token: CustomPromiseToken<T1, T>): T | undefined;
+    resolve<T>(token: InjectionToken<T> | CustomToken<T>): T;
+
+    resolveAsync<T, T1 extends CachePromise<T>>(token: InjectionToken<T> | CustomPromiseToken<T1, T>): T1;
+    resolveAsync<T>(token: InjectionToken<T> | CustomToken<T>): Promise<T>;
 }
+
+type ObjectType<T, T2> =
+  T extends CustomToken<T2> ? T : T | undefined;
 
 export class ServiceManager implements IServiceManager {
 
@@ -117,21 +126,25 @@ export class ServiceManager implements IServiceManager {
         this.eventQueue = [];
     }
 
-    register<T>(token: InjectionToken<T> | CustomToken<T>, provider: FactoryProvider<T> | ClassProvider<T>): any {
+    register<T, T1 extends CachePromise<T>>(token: InjectionToken<T> | CustomPromiseToken<T1, T> | CustomToken<T>, provider: FactoryProvider<T| T1> | ClassProvider<T>): any {
 
         const resolvedToken = this._processToken(token);
-        
+
         if (isFactoryProvider(provider)) {
-           
+
             return container.register(resolvedToken, {
                 useFactory: (c => {
-                    const instance =  provider.useFactory(c);
+                    const instance = provider.useFactory(c);
 
                     // This maybe is a async factory, will return a promise
                     // If it behave like promise, we assume it is type of promise <duck typing>
                     const promise = castPromise(instance);
+                    console.log("TEST", promise);
+                    
                     if (promise) {
                         promise.then(value => {
+                            // If return same promise, we consider add value to check when resolve
+                            promise.value = value;
                             this._afterResolve(value as unknown as BaseService);
                         });
                     } else {
@@ -155,20 +168,42 @@ export class ServiceManager implements IServiceManager {
 
     // Sometime, we resolve an instance without register before (ex by Ctor)
     // in that case, we need add trigger for resolve operation
-    resolve<T>(token: InjectionToken<T>| CustomToken<T>): T {
-        const service = container.resolve(this._processToken(token));
-    
-        // Resolve by Cto mean no use register before
-        if (typeof token === "function") {
-            const s = service as unknown as BaseService;
+    resolve<T, T1 extends CachePromise<T>>(token: CustomPromiseToken<T1, T> | InjectionToken<T> | CustomToken<T>):  T | undefined {
+        let service = container.resolve(this._processToken(token));
+
+        // This service can be promise
+        // one case to get it is it has been fulfill before
+        const svPromise = castPromise(service);
+        if (svPromise) {
+            // it's ok to be undefine
+            return svPromise.value;
+        } else {
+            // Resolve by Cto mean no use register before
+            if (typeof token === "function") {
+                const s = service as unknown as BaseService;
+
+                this._afterResolve(s);
+            }
             
-            this._afterResolve(s);
+            return service as T;
         }
-        return service;
     }
 
-    private _processToken<T>(token: InjectionToken<T>| CustomToken<T>): InjectionToken<T> {
-        return token instanceof CustomToken ? token.value : token;
+    // We can pass sync or async token, but anyway the result will be a promise
+    // Never apply for Cto token
+    resolveAsync<T, T1 extends CachePromise<T>>(token: CustomPromiseToken<T1, T> | InjectionToken<T> | CustomToken<T>): Promise<T> | T1 {
+        const service = container.resolve(this._processToken(token));
+
+        // Resolve by Cto mean no use register before
+        if (typeof token === "function") {
+            throw new Error("Constructor can' resolve as async!!!");
+        }
+        return Promise.resolve(service);
+    }
+
+    private _processToken<T, T1 extends CachePromise<T>>(token: InjectionToken<T> | CustomToken<T> | CustomPromiseToken<T1, T>): InjectionToken<T> {
+        const t = token instanceof CustomToken || token instanceof CustomPromiseToken ? token.value : token;
+        return t;
     }
 
     // Never use after resolution because it load code for object type
@@ -206,7 +241,7 @@ export class ServiceManager implements IServiceManager {
 
         // if (service instanceof FileLogService) {
         //     console.log(service);
-            
+
         // }
 
         service._onReady.fire();
@@ -241,6 +276,6 @@ export class ServiceManager implements IServiceManager {
 
 
 const serviceManager = new ServiceManager();
-export function getServiceManager() {
+export function getServiceManager(): IServiceManager {
     return serviceManager;
 }

@@ -137,8 +137,8 @@ export class URI implements UriComponents {
 	 */
 	readonly fragment: string;
 
-	public constructor(path: string) {
-		// console.log('did init uri');
+	public constructor(readonly url: string) {
+		this.path = "";
 		this.scheme = "";
 		this.authority = "";
 		this.path = "";

@@ -35,7 +35,7 @@ export class DownloadService extends BaseService implements IDownload {
 	}
 
 	async download(resource: URI, target: URI): Promise<void> {
-		console.log("Download method did call");
+		console.log("Download method did call with path: ", resource.url);
 		
 		// support copy file if src is local
         // modify options if needed and make request to resource

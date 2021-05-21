@@ -28,6 +28,7 @@ export function likePromise(obj: any) {
 }
 
 interface ILikePromise {
+	value?: any;
 	then(onfulfilled?: ((value: any) => any) | undefined | null, onrejected?: ((reason: any) =>any) | undefined | null);
 }
 

@@ -1,6 +1,7 @@
 import React, {useReducer} from 'react';
 import ReactDom from 'react-dom';
 import PasswordCreate from './pages/PasswordCreate';
+import Services from './pages/Services';
 
 const mainElement = document.createElement('div');
 document.body.appendChild(mainElement);
@@ -11,7 +12,7 @@ const App = () => {
 
   return (
     <div>
-        <PasswordCreate />
+        <Services />
     </div>
   )
 }

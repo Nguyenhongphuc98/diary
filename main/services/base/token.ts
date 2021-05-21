@@ -11,8 +11,19 @@ import { ILogService } from "../log/log";
 import { ILifecycleMainService } from "../mainLifecycle/mainLifecycle";
 import { IRequestService } from "../request/request";
 import { IStateService } from "../state/state";
+import { CachePromise } from "../types";
+import { IService } from "./service";
+
+export interface STLikeService {
+
+}
 
 export class CustomToken<T> {
+	constructor(readonly value) { }
+}
+
+export class CustomPromiseToken<T extends CachePromise<T2>, T2> {
+    private readonly promise = true;
 	constructor(readonly value) { }
 }
 
@@ -24,7 +35,8 @@ export namespace containerConfig {
     export const TOKEN_IENVIROMENT = new CustomToken<IEnvironmentService>("IEnvironmentService");
     export const TOKEN_IREQUEST = new CustomToken<IRequestService>("IRequestService");
     export const TOKEN_ILIFECYCLEMAIN = new CustomToken<ILifecycleMainService>("ILifecycleMainService");
-    export const TOKEN_IDOWNLOAD = new CustomToken<Promise<IDownload>>("IDownload");
+
+    export const TOKEN_ASYNC_IDOWNLOAD = new CustomPromiseToken<CachePromise<IDownload>, IDownload>("IDownload");
     
     // Add more token here when have new service
 }

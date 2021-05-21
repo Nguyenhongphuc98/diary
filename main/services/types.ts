@@ -18,3 +18,7 @@ export interface InitWindowOptions {
 }
 
 export type Ctor<T> = new (...args: any[]) => T;
+
+export interface CachePromise<T> extends Promise<T> {
+    value?: T | undefined;
+}

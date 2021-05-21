@@ -16,6 +16,7 @@ import { IRequestService } from "./services/request/request";
 import { IFileService } from "./services/file/file";
 import { containerConfig as config } from "./services/base/token";
 import { IDownload } from "./services/download/download";
+import { castPromise } from "./common/utils";
 
 // Begin init and setup services ===================================================
 // ==================================================================================
@@ -32,15 +33,13 @@ sm.register(
 	useClass: StateService
 });
 
-sm.register(config.TOKEN_ILOG,
-	{
-		useFactory: c => {
-			const fileService = sm.resolve(FileService);
+sm.register(config.TOKEN_ILOG, {
+	useFactory: (c => {
+		const fileService = sm.resolve(FileService);
 			const uri = new URI('uri')
 			return new FileLogService('internal log', uri, LogLevel.Info, fileService);
-		}
-	}
-);
+	})
+})
 
 sm.register(
 	config.TOKEN_ICONFIGURATION, {
@@ -62,17 +61,17 @@ sm.register(
 	useClass: MainLifecycleService
 });
 
-sm.register(config.TOKEN_IDOWNLOAD, {
-	useFactory: async c => {
+sm.register(config.TOKEN_ASYNC_IDOWNLOAD, {
+	useFactory:  async c => {
 		const DownloadService = (await import("./services/download/downloadService")).DownloadService;
 		const requestService = sm.resolve(RequestService);
 		const fileService = sm.resolve(FileService);
 
 		return new DownloadService(requestService, fileService);
 	}
-});
+})
 // End init and setup services ===================================================
 
-const appCode = container.resolve(MainApplication);
+const appCode = sm.resolve(MainApplication);
 appCode.startup();
 

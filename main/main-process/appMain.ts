@@ -10,7 +10,6 @@ import * as path from "path";
 import * as url from "url";
 import { injectable, inject } from "tsyringe";
 import { BaseService } from "../services/base/service";
-import { IDownload } from "../services/download/download";
 import { URI } from "../common/uri";
 import { InitWindowOptions } from "../services/types";
 import { getServiceManager } from "../services/base/serviceManager";
@@ -34,7 +33,6 @@ export class MainApplication extends BaseService implements IApp, ILifeCycle {
         @inject(config.TOKEN_ILOG.value) private readonly logService: ILogService
     ) {
         super();
-        this.openDownloadWindow = this.openDownloadWindow.bind(this);
         this.registerListeners();
         logService.info("MainApplication#constructor");
     }
@@ -51,10 +49,10 @@ export class MainApplication extends BaseService implements IApp, ILifeCycle {
         // this.lifecycleService.onWillShutdown(() => {
         //     this.dispose();
         // })
-        
+
         app.on('ready', e => this.openMainWindow());
         app.on('activate', (e, hasVisiblewindiws) => this.resume());
-       
+
         app.on('remote-require', (event, sender, module) => {
             this.logService.trace('app#on(remote-require): prevented');
             event.preventDefault();
@@ -76,7 +74,10 @@ export class MainApplication extends BaseService implements IApp, ILifeCycle {
             event.preventDefault();
         });
 
-        ipcMain.on('main:openDownloadWindow', this.openDownloadWindow);
+        ipcMain.on('main:download', this.downloadSomething);
+        ipcMain.on('main:asyncdownload', this.asyncDownloadSomething);
+        ipcMain.on('main:runsomerequest', this.runSomeRequest);
+        ipcMain.on('main:runsomeasyncrequest', this.asyncRunSomeRequest);
     }
 
     setup() {
@@ -153,18 +154,30 @@ export class MainApplication extends BaseService implements IApp, ILifeCycle {
         return window;
     }
 
-    setupDownloadService(): Promise<IDownload> {
-        return getServiceManager().resolve("IDownload");
+    // Use async service in sync method
+    downloadSomething() {
+        const download = getServiceManager().resolve(config.TOKEN_ASYNC_IDOWNLOAD);
+        
+        if (download) {
+            download.download(new URI("downloadSomething"), new URI(""));
+        } else {
+            console.log("Download never fulfill before, please use resolveAsync instead!");
+        }
     }
 
-    openDownloadWindow() {
-        console.log("main:opendownload");
+    // Use async service in async method
+    async asyncDownloadSomething() {
+        const download = await getServiceManager().resolveAsync(config.TOKEN_ASYNC_IDOWNLOAD);
+        download.download(new URI("asyncDownloadSomething"), new URI(""));
+    }
 
-        this
-            .setupDownloadService()
-            .then(d => {
-                d.download(new URI(""), new URI(""));
-                this.downloadWindow = this.initWindow({ contentName: "nothing.html" });
-            });
+    runSomeRequest() {
+        const req = getServiceManager().resolve(config.TOKEN_IREQUEST)
+        req.request({url: "runSomeRequest"});
+    }
+
+    async asyncRunSomeRequest() {
+        const req = await getServiceManager().resolveAsync(config.TOKEN_IREQUEST);
+        req.request({url: "asyncRunSomeRequest"});
     }
 }
