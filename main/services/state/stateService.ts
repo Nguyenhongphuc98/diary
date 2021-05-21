@@ -6,6 +6,7 @@ import { ILogService } from "../log/log";
 import { inject, singleton } from "tsyringe";
 import { BaseService } from "../base/service";
 import { containerConfig as config } from "../base/token";
+import { ZAsingleton } from "../base/decorator";
 
 
 type StorageDatabase = { [key: string]: any; };
@@ -124,7 +125,7 @@ export class FileStorage {
 	}
 }
 
-@singleton()
+@ZAsingleton()
 export class StateService extends BaseService implements IStateService {
 
 	// private static readonly STATE_FILE = 'storage.json';

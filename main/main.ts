@@ -23,55 +23,72 @@ import { castPromise } from "./common/utils";
 
 const sm = getServiceManager();
 
-sm.register(
-	config.TOKEN_IFILE, {
-	useClass: FileService
-});
+// sm.register(
+// 	config.TOKEN_IFILE, {
+// 	useClass: FileService
+// });
 
-sm.register(
-	config.TOKEN_ISTATE, {
-	useClass: StateService
-});
+// sm.register(
+// 	config.TOKEN_ISTATE, {
+// 	useClass: StateService
+// });
 
-sm.register(config.TOKEN_ILOG, {
-	useFactory: (c => {
-		const fileService = sm.resolve(FileService);
-			const uri = new URI('uri')
-			return new FileLogService('internal log', uri, LogLevel.Info, fileService);
-	})
-})
+// sm.register(config.TOKEN_ILOG, {
+// 	useFactory: (c => {
+// 		const fileService = sm.resolve(FileService);
+// 			const uri = new URI('uri')
+// 			return new FileLogService('internal log', uri, LogLevel.Info, fileService);
+// 	})
+// })
 
-sm.register(
-	config.TOKEN_ICONFIGURATION, {
-	useClass: ConfigurationService
-});
+// sm.register(
+// 	config.TOKEN_ICONFIGURATION, {
+// 	useClass: ConfigurationService
+// });
 
 sm.register(
 	config.TOKEN_IENVIROMENT, {
 	useClass: EnviromentService
 });
 
-sm.register(
-	config.TOKEN_IREQUEST, {
-	useClass: RequestService
-});
+// sm.register(
+// 	config.TOKEN_IREQUEST, {
+// 	useClass: RequestService
+// });
 
-sm.register(
-	config.TOKEN_ILIFECYCLEMAIN, {
-	useClass: MainLifecycleService
-});
+// sm.register(
+// 	config.TOKEN_ILIFECYCLEMAIN, {
+// 	useClass: MainLifecycleService
+// });
 
-sm.register(config.TOKEN_ASYNC_IDOWNLOAD, {
-	useFactory:  async c => {
-		const DownloadService = (await import("./services/download/downloadService")).DownloadService;
-		const requestService = sm.resolve(RequestService);
-		const fileService = sm.resolve(FileService);
+// sm.register(config.TOKEN_ASYNC_IDOWNLOAD, {
+// 	useFactory:  async c => {
+// 		const DownloadService = (await import("./services/download/downloadService")).DownloadService;
+// 		const requestService = sm.resolve(RequestService);
+// 		const fileService = sm.resolve(FileService);
 
-		return new DownloadService(requestService, fileService);
+// 		return new DownloadService(requestService, fileService);
+// 	}
+// })
+// // End init and setup services ===================================================
+
+// const appCode = sm.resolve(MainApplication);
+// appCode.startup();
+
+
+// test register async but we did resolve it and value is fulfill before
+// result should be able to get sync
+sm.register(config.TOKEN_ASYNC_IENVIROMENT, {
+	useFactory: async c => {
+		return sm.resolve(config.TOKEN_IENVIROMENT);
 	}
 })
-// End init and setup services ===================================================
 
-const appCode = sm.resolve(MainApplication);
-appCode.startup();
+const t = sm.resolveAsync(config.TOKEN_ASYNC_IENVIROMENT);
 
+setTimeout(() => {
+	const t2 = sm.resolve(config.TOKEN_ASYNC_IENVIROMENT);
+	t.value!.appRoot = "abc";
+	console.log("t1", t.value?.appRoot);
+	console.log("t2",t2!.appRoot);
+}, 1000);

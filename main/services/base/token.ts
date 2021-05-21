@@ -37,6 +37,7 @@ export namespace containerConfig {
     export const TOKEN_ILIFECYCLEMAIN = new CustomToken<ILifecycleMainService>("ILifecycleMainService");
 
     export const TOKEN_ASYNC_IDOWNLOAD = new CustomPromiseToken<CachePromise<IDownload>, IDownload>("IDownload");
+    export const TOKEN_ASYNC_IENVIROMENT = new CustomPromiseToken<CachePromise<IEnvironmentService>, IEnvironmentService>("IAsyncEnvironmentService");
     
     // Add more token here when have new service
 }

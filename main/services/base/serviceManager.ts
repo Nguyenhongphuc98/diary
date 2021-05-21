@@ -13,6 +13,7 @@ import { castPromise, likePromise } from "../../common/utils";
 import { LifeCyclePhase } from "./lifecycle";
 import { CustomPromiseToken, CustomToken, STLikeService } from "./token";
 import { CachePromise } from "../types";
+import { EnviromentService } from "../enviroment/enviromentService";
 
 
 // export function AutoManage<T extends { new(...args: any[]): {} }>(): any {
@@ -93,10 +94,13 @@ import { CachePromise } from "../types";
 
 type CtorToken<T> = constructor<T> | DelayedConstructor<T>;
 
+// Token in general, acceptable to register in service manager
+export type ZAToken<T, T1 extends CachePromise<T>>  = InjectionToken<T> | CustomPromiseToken<T1, T> | CustomToken<T>
+
 export interface IServiceManager {
-    register<T, T1 extends CachePromise<T>>(token: InjectionToken<T> | CustomPromiseToken<T1, T> | CustomToken<T>, provider: FactoryProvider<T1 | T>): DependencyContainer;
-    register<T, T1 extends CachePromise<T>>(token: InjectionToken<T> | CustomPromiseToken<T1, T> | CustomToken<T>, provider: ClassProvider<T>);
-    
+    register<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>, provider: FactoryProvider<T1 | T>): DependencyContainer;
+    register<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>, provider: ClassProvider<T>);
+
 
     resolve<T, T1 extends CachePromise<T>>(token: CustomPromiseToken<T1, T>): T | undefined;
     resolve<T>(token: InjectionToken<T> | CustomToken<T>): T;
@@ -105,13 +109,13 @@ export interface IServiceManager {
     resolveAsync<T>(token: InjectionToken<T> | CustomToken<T>): Promise<T>;
 }
 
-type ObjectType<T, T2> =
-  T extends CustomToken<T2> ? T : T | undefined;
-
 export class ServiceManager implements IServiceManager {
 
     // One type of service may have multi instances
     private services: LinkedList<BaseService>;
+
+    // Store fulfilled singleton service to get sync later
+    private fulfilledServices: Map<any,BaseService>;
 
     // Prevent add event to class did register
     private registered: Set<InjectionToken<IService>>;
@@ -122,11 +126,12 @@ export class ServiceManager implements IServiceManager {
 
     constructor() {
         this.services = new LinkedList();
+        this.fulfilledServices = new Map();
         this.registered = new Set();
         this.eventQueue = [];
     }
 
-    register<T, T1 extends CachePromise<T>>(token: InjectionToken<T> | CustomPromiseToken<T1, T> | CustomToken<T>, provider: FactoryProvider<T| T1> | ClassProvider<T>): any {
+    register<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>, provider: FactoryProvider<T | T1> | ClassProvider<T>): any {
 
         const resolvedToken = this._processToken(token);
 
@@ -139,12 +144,17 @@ export class ServiceManager implements IServiceManager {
                     // This maybe is a async factory, will return a promise
                     // If it behave like promise, we assume it is type of promise <duck typing>
                     const promise = castPromise(instance);
-                    console.log("TEST", promise);
-                    
+
                     if (promise) {
                         promise.then(value => {
-                            // If return same promise, we consider add value to check when resolve
+                            // Cache value, so don't need to await for nex time use this service
                             promise.value = value;
+
+                            // Promise we use can be a singletone, we save value to return sync if possible
+                            // Each time return dif promise, we have to store in service manager.
+                            if (value.singleton) {
+                                this.fulfilledServices.set(token, value);
+                            }
                             this._afterResolve(value as unknown as BaseService);
                         });
                     } else {
@@ -168,30 +178,30 @@ export class ServiceManager implements IServiceManager {
 
     // Sometime, we resolve an instance without register before (ex by Ctor)
     // in that case, we need add trigger for resolve operation
-    resolve<T, T1 extends CachePromise<T>>(token: CustomPromiseToken<T1, T> | InjectionToken<T> | CustomToken<T>):  T | undefined {
+    resolve<T, T1 extends CachePromise<T>>(token:  ZAToken<T, T1>): T | undefined {
         let service = container.resolve(this._processToken(token));
 
         // This service can be promise
-        // one case to get it is it has been fulfill before
-        const svPromise = castPromise(service);
-        if (svPromise) {
+        // one case can get it is it has been fulfill before
+        if (token instanceof CustomPromiseToken) {
             // it's ok to be undefine
-            return svPromise.value;
+            const expected = this.fulfilledServices.get(token);
+            return expected ? expected as unknown as T : undefined;
         } else {
+
             // Resolve by Cto mean no use register before
             if (typeof token === "function") {
                 const s = service as unknown as BaseService;
 
                 this._afterResolve(s);
             }
-            
             return service as T;
         }
     }
 
     // We can pass sync or async token, but anyway the result will be a promise
     // Never apply for Cto token
-    resolveAsync<T, T1 extends CachePromise<T>>(token: CustomPromiseToken<T1, T> | InjectionToken<T> | CustomToken<T>): Promise<T> | T1 {
+    resolveAsync<T, T1 extends CachePromise<T>>(token:  ZAToken<T, T1>): Promise<T> | T1 {
         const service = container.resolve(this._processToken(token));
 
         // Resolve by Cto mean no use register before
@@ -201,7 +211,7 @@ export class ServiceManager implements IServiceManager {
         return Promise.resolve(service);
     }
 
-    private _processToken<T, T1 extends CachePromise<T>>(token: InjectionToken<T> | CustomToken<T> | CustomPromiseToken<T1, T>): InjectionToken<T> {
+    private _processToken<T, T1 extends CachePromise<T>>(token:  ZAToken<T, T1>): InjectionToken<T> {
         const t = token instanceof CustomToken || token instanceof CustomPromiseToken ? token.value : token;
         return t;
     }
@@ -273,7 +283,6 @@ export class ServiceManager implements IServiceManager {
         }
     }
 }
-
 
 const serviceManager = new ServiceManager();
 export function getServiceManager(): IServiceManager {

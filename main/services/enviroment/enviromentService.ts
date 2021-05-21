@@ -1,29 +1,29 @@
-import { singleton } from "tsyringe";
 import { URI } from "../../common/uri";
+import { ZAsingleton } from "../base/decorator";
 import { BaseService } from "../base/service";
 import { IEnvironmentService } from "./enviroment";
 
-@singleton()
+@ZAsingleton()
 export class EnviromentService extends BaseService implements IEnvironmentService {
 
-    constructor(){
+    constructor() {
         super();
         console.log("EnviromentService#Constructor");
     }
-    
+
     serviceDidInit() {
-        console.log("EnviromentService#Init");	
+        console.log("EnviromentService#Init");
     }
-	
+
     serviceDidReady() {
-        console.log("EnviromentService#Ready");	
+        console.log("EnviromentService#Ready");
     }
 
     dispose() {
-        console.log("EnviromentService#dispose");	
+        console.log("EnviromentService#dispose");
         super.dispose();
     }
-   
+
     setup() {
         console.log('EnviromentService#Setup');
     }
