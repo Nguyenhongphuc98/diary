@@ -1,9 +1,9 @@
+import { singleton } from "tsyringe";
 import { URI } from "../../common/uri";
-import { ZAsingleton } from "../base/decorator";
 import { BaseService } from "../base/service";
 import { IEnvironmentService } from "./enviroment";
 
-@ZAsingleton()
+@singleton()
 export class EnviromentService extends BaseService implements IEnvironmentService {
 
     constructor() {

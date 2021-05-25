@@ -13,7 +13,7 @@ import { castPromise, likePromise } from "../../common/utils";
 import { LifeCyclePhase } from "./lifecycle";
 import { CustomPromiseToken, CustomToken, STLikeService } from "./token";
 import { CachePromise } from "../types";
-import { EnviromentService } from "../enviroment/enviromentService";
+import { FileService } from "../file/fileService";
 
 
 // export function AutoManage<T extends { new(...args: any[]): {} }>(): any {
@@ -114,8 +114,8 @@ export class ServiceManager implements IServiceManager {
     // One type of service may have multi instances
     private services: LinkedList<BaseService>;
 
-    // Store fulfilled singleton service to get sync later
-    private fulfilledServices: Map<any,BaseService>;
+    // Cache the way create instance
+    private registry: Map<any, any>;
 
     // Prevent add event to class did register
     private registered: Set<InjectionToken<IService>>;
@@ -126,7 +126,8 @@ export class ServiceManager implements IServiceManager {
 
     constructor() {
         this.services = new LinkedList();
-        this.fulfilledServices = new Map();
+        // this.fulfilledServices = new Map();
+        this.registry = new Map();
         this.registered = new Set();
         this.eventQueue = [];
     }
@@ -150,11 +151,10 @@ export class ServiceManager implements IServiceManager {
                             // Cache value, so don't need to await for nex time use this service
                             promise.value = value;
 
-                            // Promise we use can be a singletone, we save value to return sync if possible
-                            // Each time return dif promise, we have to store in service manager.
-                            if (value.singleton) {
-                                this.fulfilledServices.set(token, value);
-                            }
+                            // After fulfill, we know how to create instance without await promise
+                            // Cache factory return ctor/value let we create/return instance directly in next time call resolve this token.
+                            this.registry.set(resolvedToken, value);
+
                             this._afterResolve(value as unknown as BaseService);
                         });
                     } else {
@@ -179,16 +179,23 @@ export class ServiceManager implements IServiceManager {
     // Sometime, we resolve an instance without register before (ex by Ctor)
     // in that case, we need add trigger for resolve operation
     resolve<T, T1 extends CachePromise<T>>(token:  ZAToken<T, T1>): T | undefined {
-        let service = container.resolve(this._processToken(token));
+        const resolvedToken = this._processToken(token);
 
         // This service can be promise
         // one case can get it is it has been fulfill before
         if (token instanceof CustomPromiseToken) {
-            // it's ok to be undefine
-            const expected = this.fulfilledServices.get(token);
-            return expected ? expected as unknown as T : undefined;
+
+            const value = this.registry.get(resolvedToken);
+            if (value && typeof value.constructor === "function") {
+                // Use cached constructor
+                return container.resolve(value.constructor);   
+            } else {
+                // Factory return value, rarely but possible
+                return value; // value | undefine
+            }
         } else {
 
+            let service = container.resolve(resolvedToken);
             // Resolve by Cto mean no use register before
             if (typeof token === "function") {
                 const s = service as unknown as BaseService;
@@ -248,11 +255,6 @@ export class ServiceManager implements IServiceManager {
         if (service.asyncSetup) {
             await service.asyncSetup();
         }
-
-        // if (service instanceof FileLogService) {
-        //     console.log(service);
-
-        // }
 
         service._onReady.fire();
         service.phase = LifeCyclePhase.ready;

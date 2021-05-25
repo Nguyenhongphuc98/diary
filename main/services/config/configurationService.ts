@@ -5,6 +5,9 @@ import { IConfiguration } from "./configuration";
 // language, http.proxyAuthorization, enable background update, 
 export class ConfigurationService extends BaseService implements IConfiguration {
 
+    enableCrashReporter: boolean = true;
+    language: string = "vi";
+
     constructor() {
         super();
         console.log("In ConfigurationService constructor");

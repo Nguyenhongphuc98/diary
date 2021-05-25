@@ -1,6 +1,6 @@
 
 import "reflect-metadata";
-import { container } from "tsyringe";
+import { container, Lifecycle } from "tsyringe";
 import { StateService } from "./services/state/stateService";
 import { ConfigurationService } from "./services/config/configurationService";
 import { EnviromentService } from "./services/enviroment/enviromentService";
@@ -18,8 +18,8 @@ import { containerConfig as config } from "./services/base/token";
 import { IDownload } from "./services/download/download";
 import { castPromise } from "./common/utils";
 
-// Begin init and setup services ===================================================
-// ==================================================================================
+// // Begin init and setup services ===================================================
+// // ==================================================================================
 
 const sm = getServiceManager();
 
@@ -46,10 +46,10 @@ const sm = getServiceManager();
 // 	useClass: ConfigurationService
 // });
 
-sm.register(
-	config.TOKEN_IENVIROMENT, {
-	useClass: EnviromentService
-});
+// sm.register(
+// 	config.TOKEN_IENVIROMENT, {
+// 	useClass: EnviromentService
+// });
 
 // sm.register(
 // 	config.TOKEN_IREQUEST, {
@@ -78,6 +78,10 @@ sm.register(
 
 // test register async but we did resolve it and value is fulfill before
 // result should be able to get sync
+sm.register(
+	config.TOKEN_IENVIROMENT, {
+	useClass: EnviromentService
+});
 sm.register(config.TOKEN_ASYNC_IENVIROMENT, {
 	useFactory: async c => {
 		return sm.resolve(config.TOKEN_IENVIROMENT);
@@ -92,3 +96,24 @@ setTimeout(() => {
 	console.log("t1", t.value?.appRoot);
 	console.log("t2",t2!.appRoot);
 }, 1000);
+
+
+// container.register('ConfigurationService', {useClass: ConfigurationService}, {lifecycle: Lifecycle.Singleton});
+// const c1 = container.resolve('ConfigurationService');
+// (c1 as ConfigurationService ).language = 'en'
+// const c2 = container.createChildContainer().resolve('ConfigurationService');
+// console.log((c2 as ConfigurationService ).language);
+
+// class A {
+// 	constructor() {
+		
+// 	}
+// }
+// container.register('a', {
+// 	useFactory: c => {
+// 		return {a: 'a'};
+// 	}
+// })
+
+// const t = container.resolve('a');
+// console.log((t as Object).constructor());
