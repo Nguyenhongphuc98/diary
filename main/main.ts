@@ -23,97 +23,61 @@ import { castPromise } from "./common/utils";
 
 const sm = getServiceManager();
 
-// sm.register(
-// 	config.TOKEN_IFILE, {
-// 	useClass: FileService
-// });
+sm.register(
+	config.TOKEN_IFILE, {
+	useClass: FileService
+});
 
-// sm.register(
-// 	config.TOKEN_ISTATE, {
-// 	useClass: StateService
-// });
+sm.register(
+	config.TOKEN_ISTATE, {
+	useClass: StateService
+});
 
-// sm.register(config.TOKEN_ILOG, {
-// 	useFactory: (c => {
-// 		const fileService = sm.resolve(FileService);
-// 			const uri = new URI('uri')
-// 			return new FileLogService('internal log', uri, LogLevel.Info, fileService);
-// 	})
-// })
+sm.register(config.TOKEN_ILOG, {
+	useFactory: c => {
+		sm.register(config.TOKEN_FILELOGNAME, {
+			useValue: "Internal log"
+		})
 
-// sm.register(
-// 	config.TOKEN_ICONFIGURATION, {
-// 	useClass: ConfigurationService
-// });
+		sm.register(config.TOKEN_FILELOGURI, {
+			useValue: new URI('uri')
+		})
 
-// sm.register(
-// 	config.TOKEN_IENVIROMENT, {
-// 	useClass: EnviromentService
-// });
+		sm.register(config.TOKEN_FILELOGLEVEL, {
+			useValue: LogLevel.Info
+		})
+		return sm.resolve(FileLogService);
+	}
+})
 
-// sm.register(
-// 	config.TOKEN_IREQUEST, {
-// 	useClass: RequestService
-// });
+sm.register(
+	config.TOKEN_ICONFIGURATION, {
+	useClass: ConfigurationService
+});
 
-// sm.register(
-// 	config.TOKEN_ILIFECYCLEMAIN, {
-// 	useClass: MainLifecycleService
-// });
-
-// sm.register(config.TOKEN_ASYNC_IDOWNLOAD, {
-// 	useFactory:  async c => {
-// 		const DownloadService = (await import("./services/download/downloadService")).DownloadService;
-// 		const requestService = sm.resolve(RequestService);
-// 		const fileService = sm.resolve(FileService);
-
-// 		return new DownloadService(requestService, fileService);
-// 	}
-// })
-// // End init and setup services ===================================================
-
-// const appCode = sm.resolve(MainApplication);
-// appCode.startup();
-
-
-// test register async but we did resolve it and value is fulfill before
-// result should be able to get sync
 sm.register(
 	config.TOKEN_IENVIROMENT, {
 	useClass: EnviromentService
 });
-sm.register(config.TOKEN_ASYNC_IENVIROMENT, {
+
+sm.register(
+	config.TOKEN_IREQUEST, {
+	useClass: RequestService
+});
+
+sm.register(
+	config.TOKEN_ILIFECYCLEMAIN, {
+	useClass: MainLifecycleService
+});
+
+sm.register(config.TOKEN_ASYNC_IDOWNLOAD, {
 	useFactory: async c => {
-		return sm.resolve(config.TOKEN_IENVIROMENT);
+		const DownloadService = (await import("./services/download/downloadService")).DownloadService;
+		return sm.resolve(DownloadService);
 	}
 })
+// End init and setup services ===================================================
 
-const t = sm.resolveAsync(config.TOKEN_ASYNC_IENVIROMENT);
+const appCode = sm.resolve(MainApplication);
+appCode.startup();
 
-setTimeout(() => {
-	const t2 = sm.resolve(config.TOKEN_ASYNC_IENVIROMENT);
-	t.value!.appRoot = "abc";
-	console.log("t1", t.value?.appRoot);
-	console.log("t2",t2!.appRoot);
-}, 1000);
-
-
-// container.register('ConfigurationService', {useClass: ConfigurationService}, {lifecycle: Lifecycle.Singleton});
-// const c1 = container.resolve('ConfigurationService');
-// (c1 as ConfigurationService ).language = 'en'
-// const c2 = container.createChildContainer().resolve('ConfigurationService');
-// console.log((c2 as ConfigurationService ).language);
-
-// class A {
-// 	constructor() {
-		
-// 	}
-// }
-// container.register('a', {
-// 	useFactory: c => {
-// 		return {a: 'a'};
-// 	}
-// })
-
-// const t = container.resolve('a');
-// console.log((t as Object).constructor());

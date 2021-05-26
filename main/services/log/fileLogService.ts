@@ -11,9 +11,9 @@ export class FileLogService extends AbstractLog implements ILogService {
 	private readonly initializePromise: Promise<void> | undefined;
 
 	constructor(
-		private readonly name: string,
-		private readonly resource: URI,
-		level: LogLevel,
+		@inject(config.TOKEN_FILELOGNAME.value) private readonly name: string,
+		@inject(config.TOKEN_FILELOGURI.value) private readonly resource: URI,
+		@inject(config.TOKEN_FILELOGLEVEL.value) level: LogLevel,
 		@inject(config.TOKEN_IFILE.value) private readonly fileService: IFileService
 	) {
 		super();

@@ -6,14 +6,13 @@ import "reflect-metadata";
 import { BaseService, IService } from "./service";
 import { app } from "electron";
 import { LinkedList } from "../../common/linkedList";
-import { ClassProvider, container, DependencyContainer, FactoryProvider, InjectionToken, isClassProvider, isFactoryProvider } from "tsyringe";
+import { ClassProvider, container, DependencyContainer, FactoryProvider, InjectionToken, isClassProvider, isFactoryProvider, ValueProvider } from "tsyringe";
 import { constructor } from "tsyringe/dist/typings/types";
 import { DelayedConstructor } from "tsyringe/dist/typings/lazy-helpers";
-import { castPromise, likePromise } from "../../common/utils";
+import { castPromise } from "../../common/utils";
 import { LifeCyclePhase } from "./lifecycle";
-import { CustomPromiseToken, CustomToken, STLikeService } from "./token";
+import { CustomPromiseToken, CustomToken } from "./token";
 import { CachePromise } from "../types";
-import { FileService } from "../file/fileService";
 
 
 // export function AutoManage<T extends { new(...args: any[]): {} }>(): any {
@@ -60,38 +59,6 @@ import { FileService } from "../file/fileService";
 //     };
 // }
 
-// export function AutoManage(attr: any) {
-//     return function _AutoManage<T extends {new(...args: any[]): {}}>(constr: T){
-//       return class extends constr {
-//         constructor(...args: any[]) {
-//           super(...args)
-//           console.log('Did something after the original constructor!')
-//           console.log('Here is my attribute!', attr.attrName)
-//         }
-//       }
-//     }
-//   }
-
-
-// const t = (
-//     target: Object,
-//     propertyKey: string,
-//     descriptor: PropertyDescriptor
-// ) => {
-//     const originalMethod = descriptor.value;
-
-//     descriptor.value = function (...args) {
-
-//         const result = originalMethod.apply(this, args);
-
-//         console.log(`Execution time: milliseconds`);
-//         return result;
-//     };
-
-//     return descriptor;
-// };
-
-
 type CtorToken<T> = constructor<T> | DelayedConstructor<T>;
 
 // Token in general, acceptable to register in service manager
@@ -100,6 +67,7 @@ export type ZAToken<T, T1 extends CachePromise<T>>  = InjectionToken<T> | Custom
 export interface IServiceManager {
     register<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>, provider: FactoryProvider<T1 | T>): DependencyContainer;
     register<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>, provider: ClassProvider<T>);
+    register<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>, provider: ValueProvider<T>): DependencyContainer;
 
 
     resolve<T, T1 extends CachePromise<T>>(token: CustomPromiseToken<T1, T>): T | undefined;
@@ -132,7 +100,7 @@ export class ServiceManager implements IServiceManager {
         this.eventQueue = [];
     }
 
-    register<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>, provider: FactoryProvider<T | T1> | ClassProvider<T>): any {
+    register<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>, provider: FactoryProvider<T | T1> | ClassProvider<T> | ValueProvider<T>): any {
 
         const resolvedToken = this._processToken(token);
 
@@ -164,8 +132,7 @@ export class ServiceManager implements IServiceManager {
                     return instance;
                 })
             })
-        } else {
-
+        } else if (isClassProvider(provider)) {
             container.register(resolvedToken, {
                 useFactory: (c => {
                     const instance = c.resolve(provider.useClass);
@@ -173,11 +140,15 @@ export class ServiceManager implements IServiceManager {
                     return instance;
                 })
             })
+        } else {
+            return container.register(resolvedToken, {
+                useValue: provider.useValue
+            })
         }
     }
 
-    // Sometime, we resolve an instance without register before (ex by Ctor)
-    // in that case, we need add trigger for resolve operation
+    // Resolve service by any token type
+    // if it's promise token, we return undefine if it not resolve and fulfill before 
     resolve<T, T1 extends CachePromise<T>>(token:  ZAToken<T, T1>): T | undefined {
         const resolvedToken = this._processToken(token);
 
@@ -197,6 +168,7 @@ export class ServiceManager implements IServiceManager {
 
             let service = container.resolve(resolvedToken);
             // Resolve by Cto mean no use register before
+            // we need add trigger for resolve operation
             if (typeof token === "function") {
                 const s = service as unknown as BaseService;
 
