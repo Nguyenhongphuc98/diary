@@ -6,69 +6,25 @@ import "reflect-metadata";
 import { BaseService, IService } from "./service";
 import { app } from "electron";
 import { LinkedList } from "../../common/linkedList";
-import { ClassProvider, container, DependencyContainer, FactoryProvider, InjectionToken, isClassProvider, isFactoryProvider, ValueProvider } from "tsyringe";
-import { constructor } from "tsyringe/dist/typings/types";
+import { ClassProvider, container, DependencyContainer, FactoryProvider, InjectionToken, isClassProvider, isFactoryProvider, isValueProvider, singleton, ValueProvider } from "tsyringe";
+import { constructor, Lifecycle, RegistrationOptions } from "tsyringe/dist/typings/types";
 import { DelayedConstructor } from "tsyringe/dist/typings/lazy-helpers";
 import { castPromise } from "../../common/utils";
 import { LifeCyclePhase } from "./lifecycle";
 import { CustomPromiseToken, CustomToken } from "./token";
 import { CachePromise } from "../types";
-
-
-// export function AutoManage<T extends { new(...args: any[]): {} }>(): any {
-
-//     return (target: T): Ctor<T> => {
-//         // Save a reference to the original constructor
-//         const Original = target;
-
-//         // the new constructor behaviour
-//         let decoratedConstructor: any = function (...args: any[]): void {
-//             console.log("Before construction:", Original);
-//             Original.apply(this, args);
-//             console.log("After construction");
-//         };
-
-//         // Copy prototype so intanceof operator still works
-//         decoratedConstructor.prototype = Original.prototype;
-//         // Copy static members too
-//         Object.keys(Original).forEach((name: string) => { decoratedConstructor[name] = (<any>Original)[name]; });
-
-//         // Return new constructor (will override original)
-//         return decoratedConstructor;
-//     };
-// }
-
-// export function AutoManage() {
-//     return function (target: any) {
-
-//         const original = target;
-
-//         var newCtor: any = function (...args) {
-//             console.log('AutoManage: before class constructor', original.name);
-//             // let instance = new original(args);
-//             let instance = original.apply(this, args)
-//             console.log('AutoManage: after class constructor', original.name);
-//             return instance;
-//         }
-
-//         // copy prototype so intanceof operator still works
-//         newCtor.prototype = original.prototype;
-
-//         // return new constructor (will override original)
-//         return newCtor;
-//     };
-// }
+import { SMLifecycle, SMRegistrationOptions, SMRegistry } from "./registry";
 
 type CtorToken<T> = constructor<T> | DelayedConstructor<T>;
 
 // Token in general, acceptable to register in service manager
-export type ZAToken<T, T1 extends CachePromise<T>>  = InjectionToken<T> | CustomPromiseToken<T1, T> | CustomToken<T>
+export type ZAToken<T, T1 extends CachePromise<T>> = InjectionToken<T> | CustomPromiseToken<T1, T> | CustomToken<T>
+export type ZAProvider<T, T1 extends CachePromise<T>> = FactoryProvider<T | T1> | ClassProvider<T> | ValueProvider<T>;
 
 export interface IServiceManager {
-    register<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>, provider: FactoryProvider<T1 | T>): DependencyContainer;
-    register<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>, provider: ClassProvider<T>);
-    register<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>, provider: ValueProvider<T>): DependencyContainer;
-
+    register<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>, provider: FactoryProvider<T1 | T>): IServiceManager;
+    register<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>, provider: ClassProvider<T>, options?: SMRegistrationOptions): IServiceManager;
+    register<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>, provider: ValueProvider<T>): IServiceManager;
 
     resolve<T, T1 extends CachePromise<T>>(token: CustomPromiseToken<T1, T>): T | undefined;
     resolve<T>(token: InjectionToken<T> | CustomToken<T>): T;
@@ -83,7 +39,7 @@ export class ServiceManager implements IServiceManager {
     private services: LinkedList<BaseService>;
 
     // Cache the way create instance
-    private registry: Map<any, any>;
+    private registry: SMRegistry;
 
     // Prevent add event to class did register
     private registered: Set<InjectionToken<IService>>;
@@ -95,78 +51,100 @@ export class ServiceManager implements IServiceManager {
     constructor() {
         this.services = new LinkedList();
         // this.fulfilledServices = new Map();
-        this.registry = new Map();
+        this.registry = new SMRegistry();
         this.registered = new Set();
         this.eventQueue = [];
     }
 
-    register<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>, provider: FactoryProvider<T | T1> | ClassProvider<T> | ValueProvider<T>): any {
-
+    register<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>, provider: ZAProvider<T, T1>, options?: SMRegistrationOptions): IServiceManager {
         const resolvedToken = this._processToken(token);
 
-        if (isFactoryProvider(provider)) {
+        switch (true) {
+            case (isClassProvider(provider)):
+                const useclass = (provider as ClassProvider<T>).useClass;
+                const opt = options || { lifecycle: SMLifecycle.Transient };
+                this.registry.set(resolvedToken, opt);
 
-            return container.register(resolvedToken, {
-                useFactory: (c => {
-                    const instance = provider.useFactory(c);
-
-                    // This maybe is a async factory, will return a promise
-                    // If it behave like promise, we assume it is type of promise <duck typing>
-                    const promise = castPromise(instance);
-
-                    if (promise) {
-                        promise.then(value => {
-                            // Cache value, so don't need to await for nex time use this service
-                            promise.value = value;
-
-                            // After fulfill, we know how to create instance without await promise
-                            // Cache factory return ctor/value let we create/return instance directly in next time call resolve this token.
-                            this.registry.set(resolvedToken, value);
-
-                            this._afterResolve(value as unknown as BaseService);
-                        });
-                    } else {
-                        this._afterResolve(instance as unknown as BaseService);
-                    }
-
-                    return instance;
+                container.register(resolvedToken, {
+                    useFactory: (c => {
+                        let instance;
+                        if (opt.lifecycle === SMLifecycle.Singleton || opt.lifecycle === SMLifecycle.ContainerScoped) {
+                            instance = this.registry.getInstance(resolvedToken) || this.registry.setInstance(resolvedToken, c.resolve(useclass));
+                        } else {
+                            instance = c.resolve(useclass);
+                            this._afterResolve(instance as unknown as BaseService);
+                        }
+                        return instance;
+                    })
                 })
-            })
-        } else if (isClassProvider(provider)) {
-            container.register(resolvedToken, {
-                useFactory: (c => {
-                    const instance = c.resolve(provider.useClass);
-                    this._afterResolve(instance as unknown as BaseService);
-                    return instance;
+                break;
+
+            case isFactoryProvider(provider):
+                container.register(resolvedToken, {
+                    useFactory: (c => {
+                        const instance = (provider as FactoryProvider<T>).useFactory(c);
+
+                        // This maybe is a async factory, will return a promise
+                        // If it behave like promise, we assume it is type of promise <duck typing>
+                        const promise = castPromise(instance);
+
+                        if (promise) {
+                            promise.then(value => {
+                                // Cache value, so don't need to await for nex time use this service
+                                promise.value = value;
+
+                                // After fulfill, we know how to create instance without await promise
+                                // Cache factory return ctor/value let we create/return instance directly in next time call resolve this token.
+                                this.registry.set(resolvedToken, value);
+
+                                this._afterResolve(value as unknown as BaseService);
+                            });
+                        } else {
+                            this._afterResolve(instance as unknown as BaseService);
+                        }
+
+                        return instance;
+                    })
                 })
-            })
-        } else {
-            return container.register(resolvedToken, {
-                useValue: provider.useValue
-            })
+                break;
+
+            case (isValueProvider(provider)):
+                container.register(resolvedToken, {
+                    useValue: (provider as ValueProvider<T>).useValue
+                })
+                break;
+
+            default:
+                console.warn("Unknown provider");
+                break;
         }
+
+        return this;
     }
 
     // Resolve service by any token type
     // if it's promise token, we return undefine if it not resolve and fulfill before 
-    resolve<T, T1 extends CachePromise<T>>(token:  ZAToken<T, T1>): T | undefined {
+    resolve<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>): ZAToken<T, T1> extends CustomPromiseToken<any, any> ? T | undefined : T {
         const resolvedToken = this._processToken(token);
 
         // This service can be promise
         // one case can get it is it has been fulfill before
         if (token instanceof CustomPromiseToken) {
 
-            const value = this.registry.get(resolvedToken);
-            if (value && typeof value.constructor === "function") {
+            // We don't apply SMLifecycle for async factory
+            // So that when come here, it absoutely not cached instance for resolve singleton or container
+            const instance = this.registry.getInstance(resolvedToken);
+            if (instance && typeof instance.constructor === "function") {
                 // Use cached constructor
-                return container.resolve(value.constructor);   
+                return container.resolve(instance.constructor);
             } else {
                 // Factory return value, rarely but possible
-                return value; // value | undefine
+                return instance; // value | undefine
             }
         } else {
 
             let service = container.resolve(resolvedToken);
+            
             // Resolve by Cto mean no use register before
             // we need add trigger for resolve operation
             if (typeof token === "function") {
@@ -174,13 +152,13 @@ export class ServiceManager implements IServiceManager {
 
                 this._afterResolve(s);
             }
-            return service as T;
+            return service;
         }
     }
 
     // We can pass sync or async token, but anyway the result will be a promise
     // Never apply for Cto token
-    resolveAsync<T, T1 extends CachePromise<T>>(token:  ZAToken<T, T1>): Promise<T> | T1 {
+    resolveAsync<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>): ZAToken<T, T1> extends CustomPromiseToken<T1, T> ? T1 : Promise<T> {
         const service = container.resolve(this._processToken(token));
 
         // Resolve by Cto mean no use register before
@@ -190,7 +168,7 @@ export class ServiceManager implements IServiceManager {
         return Promise.resolve(service);
     }
 
-    private _processToken<T, T1 extends CachePromise<T>>(token:  ZAToken<T, T1>): InjectionToken<T> {
+    private _processToken<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>): InjectionToken<T> {
         const t = token instanceof CustomToken || token instanceof CustomPromiseToken ? token.value : token;
         return t;
     }
