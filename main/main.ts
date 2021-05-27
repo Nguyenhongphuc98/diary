@@ -83,18 +83,35 @@ import { SMLifecycle } from "./services/base/registry";
 // appCode.startup();
 
 
+//============================================================================
 // Test register options on class provider
+// const sm = new ServiceManager();
+
+// sm.register(
+// 	config.TOKEN_IFILE, {
+// 	useClass: FileService
+// }, {lifecycle: SMLifecycle.Singleton});
+
+// const t = sm.resolve(config.TOKEN_IFILE);
+// const t2 = sm.resolve(config.TOKEN_IFILE);
+
+// const t3 = sm.resolveAsync(config.TOKEN_ASYNC_IDOWNLOAD);
+// setTimeout(() => {
+// 	const t4 = sm.resolve(config.TOKEN_ASYNC_IDOWNLOAD);
+// }, 1000);
+
+//============================================================================
+// Test register singleton for ctor, all resolve after that will same instance
 const sm = new ServiceManager();
+
+sm.registerSingleton(FileService);
+
+sm.resolve(FileService);
+sm.resolve(FileService);
 
 sm.register(
 	config.TOKEN_IFILE, {
 	useClass: FileService
-}, {lifecycle: SMLifecycle.Singleton});
+});
 
-const t = sm.resolve(config.TOKEN_IFILE);
-const t2 = sm.resolve(config.TOKEN_IFILE);
-
-const t3 = sm.resolveAsync(config.TOKEN_ASYNC_IDOWNLOAD);
-setTimeout(() => {
-	const t4 = sm.resolve(config.TOKEN_ASYNC_IDOWNLOAD);
-}, 1000);
+sm.resolve(config.TOKEN_IFILE);

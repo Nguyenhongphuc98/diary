@@ -32,13 +32,14 @@ export class SMRegistry {
         return value;
     }
 
-    setInstance(key: any, value: any) {
+    setInstance<T>(key: any, value: T): T {
         const item = this.get(key);
         if (item) {
            item.instance = value;
         } else {
             console.warn("SMRegistryItem not found with key: ", key);
         }
+        return value;
     }
 
     setLifecycle(key: any, value: SMLifecycle) {

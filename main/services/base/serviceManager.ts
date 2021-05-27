@@ -6,14 +6,14 @@ import "reflect-metadata";
 import { BaseService, IService } from "./service";
 import { app } from "electron";
 import { LinkedList } from "../../common/linkedList";
-import { ClassProvider, container, DependencyContainer, FactoryProvider, InjectionToken, isClassProvider, isFactoryProvider, isValueProvider, singleton, ValueProvider } from "tsyringe";
-import { constructor, Lifecycle, RegistrationOptions } from "tsyringe/dist/typings/types";
+import { ClassProvider, container, Lifecycle, FactoryProvider, InjectionToken, isClassProvider, isFactoryProvider, isValueProvider, ValueProvider } from "tsyringe";
 import { DelayedConstructor } from "tsyringe/dist/typings/lazy-helpers";
 import { castPromise } from "../../common/utils";
 import { LifeCyclePhase } from "./lifecycle";
 import { CustomPromiseToken, CustomToken } from "./token";
 import { CachePromise } from "../types";
 import { SMLifecycle, SMRegistrationOptions, SMRegistry } from "./registry";
+import { constructor } from "tsyringe/dist/typings/types";
 
 type CtorToken<T> = constructor<T> | DelayedConstructor<T>;
 
@@ -25,6 +25,8 @@ export interface IServiceManager {
     register<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>, provider: FactoryProvider<T1 | T>): IServiceManager;
     register<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>, provider: ClassProvider<T>, options?: SMRegistrationOptions): IServiceManager;
     register<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>, provider: ValueProvider<T>): IServiceManager;
+
+    registerSingleton<T>(token: constructor<T>): IServiceManager;
 
     resolve<T, T1 extends CachePromise<T>>(token: CustomPromiseToken<T1, T>): T | undefined;
     resolve<T>(token: InjectionToken<T> | CustomToken<T>): T;
@@ -122,9 +124,16 @@ export class ServiceManager implements IServiceManager {
         return this;
     }
 
+    // Register singleton for this and only this token
+    registerSingleton<T>(token: constructor<T>): IServiceManager {
+        // singleton()(token); this will effect global
+        this.registry.set(token, { lifecycle: SMLifecycle.Singleton });
+        return this;
+    }
+
     // Resolve service by any token type
     // if it's promise token, we return undefine if it not resolve and fulfill before 
-    resolve<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>): ZAToken<T, T1> extends CustomPromiseToken<any, any> ? T | undefined : T {
+    resolve<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>): T | undefined {
         const resolvedToken = this._processToken(token);
 
         // This service can be promise
@@ -143,22 +152,32 @@ export class ServiceManager implements IServiceManager {
             }
         } else {
 
-            let service = container.resolve(resolvedToken);
-            
+            let service: T;
             // Resolve by Cto mean no use register before
             // we need add trigger for resolve operation
             if (typeof token === "function") {
-                const s = service as unknown as BaseService;
+                const registryItem = this.registry.get(resolvedToken);
 
+                // This Ctor did registerSingleton before
+                if (registryItem && registryItem.lifecycle === SMLifecycle.Singleton) {
+                    service = this.registry.getInstance(resolvedToken) || this.registry.setInstance(resolvedToken, container.resolve(resolvedToken));
+                } else {
+                    service = container.resolve(resolvedToken); 
+                }
+
+                const s = service as unknown as BaseService;
                 this._afterResolve(s);
-            }
+            } else {
+                service = container.resolve(resolvedToken); 
+            } 
+
             return service;
         }
     }
 
     // We can pass sync or async token, but anyway the result will be a promise
     // Never apply for Cto token
-    resolveAsync<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>): ZAToken<T, T1> extends CustomPromiseToken<T1, T> ? T1 : Promise<T> {
+    resolveAsync<T, T1 extends CachePromise<T>>(token: ZAToken<T, T1>): T1 | Promise<T> {
         const service = container.resolve(this._processToken(token));
 
         // Resolve by Cto mean no use register before
